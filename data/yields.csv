@@ -1,0 +1,107 @@
+Food group,Food group ID,Commonly consumed food,Commonly consumed food ID,Yield-edible,Cooking method,Yield-cooking,Yield-default
+Fruit,1,"Apples, fresh",01001,,,,88
+Fruit,1,"Bananas, fresh",01002,,,,61
+Fruit,1,"Grapes, fresh",01003,,,,96
+Fruit,1,"Kiwifruit, fresh",01004,,,,75
+Fruit,1,"Mandarins, fresh",01005,,,,72
+Fruit,1,"Nectarines, fresh",01006,,,,92
+Fruit,1,"Oranges, fresh",01007,,,,64
+Fruit,1,"Peaches, canned in clear juice",01008,,,,60
+Fruit,1,"Pears, fresh",01009,,,,88
+Fruit,1,"Sultanas, dried",01010,,,,100
+Vegetables,2,"Avocados, fresh",02011,,,,70
+Vegetables,2,"Broccoli, fresh",02012,,,,70
+Vegetables,2,"Cabbage, fresh",02013,,,,75
+Vegetables,2,"Capsicums, fresh",02014,,,,88
+Vegetables,2,"Carrots, fresh",02015,,,,87
+Vegetables,2,"Cauliflower, fresh",02016,,,,54
+Vegetables,2,"Courgettes, fresh",02017,,,,90
+Vegetables,2,"Cucumber, fresh",02018,,,,97
+Vegetables,2,"Lettuce, fresh",02019,,,,85
+Vegetables,2,"Kumara, fresh",02020,,,,87
+Vegetables,2,"Mixed vegetables, frozen",02021,,,,100
+Vegetables,2,"Mushrooms, fresh",02022,,,,100
+Vegetables,2,"Onions, fresh",02023,,,,85
+Vegetables,2,"Peas, fozen",02024,,,,100
+Vegetables,2,"Potatoes, fresh",02025,,,,90
+Vegetables,2,"Potato fries, frozen, superfries, straight cut",02026,,,,100
+Vegetables,2,"Pumpkin, fresh",02027,,,,72
+Vegetables,2,"Silverbeet, fresh",02028,,,,83
+Vegetables,2,"Tomatoes, fresh",02029,,,,100
+Vegetables,2,"Tomatoes, canned, drained",02030,,,,60
+Grains,3,"Bread, white",03031,,,,100
+Grains,3,"Bread, wheatmeal",03032,,,,100
+Grains,3,"Bread, wholegrain",03033,,,,100
+Grains,3,Pita bread,03034,,,,100
+Grains,3,"Cake, fruit",03035,,,,100
+Grains,3,"Biscuits, plain gingernut",03036,,,,100
+Grains,3,"Biscuits, chocolate chip",03037,,,,100
+Grains,3,"Biscuits, crackers Shapes",03038,,,,100
+Grains,3,"Muffins, scone",03039,,,,100
+Grains,3,Cornflakes,03040,,,,100
+Grains,3,"Muesli, toasted",03041,,,,100
+Grains,3,Weetbix,03042,,,,100
+Grains,3,Rolled oats,03043,,,,578
+Grains,3,Pasta dried,03044,,,,240
+Grains,3,"Quick noodles, 2 minutes",03045,,,,450
+Grains,3,Brown rice,03046,,,,250
+Grains,3,"Rice, long grain, white",03047,,,,240
+Grains,3,"Spaghetti, canned",03048,,,,100
+Dairy,4,"Cheese, colby",04049,,,,100
+Dairy,4,"Cheese, Edam",04050,,,,100
+Dairy,4,"Milk, trim",04051,,,,100
+Dairy,4,"Milk, standard",04052,,,,100
+Dairy,4,"Yoghurt, full-fat flavoured",04053,,,,100
+Dairy,4,"Yoghurt, natural, low-fat",04054,,,,100
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Eggs,05055,,,,85
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Beef, corned silverside",05056,,,,61
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Beef steak, blade",05057,,,,71
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Beef steak, rump",05058,,,,71
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Beef, mince, stewed",05059,,,,85
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Chicken breast fresh,05060,,,,75
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,chicken pieces with bone,05061,,,,60
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Chicken, whole, pre-cooked",05062,,,,58
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Chicken drumstick,05063,,,,48
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Lamb shoulder chops,05064,,,,60
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Pork leg roast,05065,,,,66
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Bacon, middle rashers",05066,,,,77
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Ham, sliced or shaved",05067,,,,100
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Sausages,05068,,,,78
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Fish fillets, fresh",05069,,,,85
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Tuna, canned",05070,,,,73
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Fish fillets, frozen, multipack",05071,,,,85
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Baked Beans regular,05072,,,,100
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Hummus dip,05073,,,,100
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Lentils, canned in springwater",05074,,,,59
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Peanuts, plain",05075,,,,100
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Almonds, plain",05076,,,,100
+Fats & oils,6,Butter,06077,,,,100
+Fats & oils,6,"Margarine, mufa regular fat",06078,,,,100
+Fats & oils,6,Olive oil,06079,,,,100
+Fats & oils,6,Canola oil,06080,,,,100
+Snacks,7,"Chocolate, dairy milk block",07081,,,,100
+Snacks,7,"Sweets - gum, jelly soft ",07082,,,,100
+Snacks,7,"Ice cream, plain",07083,,,,100
+Snacks,7,"Muesli Bar, fruit nut choc",07084,,,,100
+Snacks,7,"Potato crisps, regular cut",07085,,,,100
+"Sauces, dressings, spreads, sugars",8,Jam,08086,,,,100
+Sauces,8,Peanut butter,08087,,,,100
+Sauces,8,"Vegetable soup, canned",08088,,,,100
+Sauces,8,Pasta sauce,08089,,,,100
+Sauces,8,"Mayonnaise, regular",08090,,,,100
+Sauces,8,Tomato sauce,08091,,,,100
+Sauces,8,White sugar,08092,,,,100
+Beverages,9,"Milo, powder",09093,,,,100
+Beverages,9,Cola,09094,,,,100
+Beverages,9,Diet cola,09095,,,,100
+Beverages,9,Fruit drink orange,09096,,,,100
+Beverages,9,Orange juice,09097,,,,100
+Beverages,9,Drink Powder,09098,,,,100
+Takeaway,10,Meat pie,10099,,,,100
+Takeaway,10,Whole cooked chicken (supermarket),10100,,,,64
+Takeaway,10,Hot chips,10101,,,,100
+Takeaway,10,Battered fish,10102,,,,100
+Takeaway,10,Pizza,10103,,,,100
+Takeaway,10,Burger,10104,,,,100
+Alcohol,11,"Wine, medium white",11105,,,,100
+Alcohol,11,"Beer, lager, draught, bitter",11106,,,,100

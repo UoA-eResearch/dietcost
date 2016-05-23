@@ -1,0 +1,107 @@
+Food group,Food group ID,Commonly consumed food,Commonly consumed food ID,Variety,core/disc,Child,Population group
+Fruit,1,"Apples, fresh",01001,1,c,y,All
+Fruit,1,"Bananas, fresh",01002,1,c,y,All
+Fruit,1,"Grapes, fresh",01003,3,c,y,All
+Fruit,1,"Kiwifruit, fresh",01004,2,c,y,All
+Fruit,1,"Mandarins, fresh",01005,2,c,y,All
+Fruit,1,"Nectarines, fresh",01006,3,c,n,All
+Fruit,1,"Oranges, fresh",01007,1,c,y,All
+Fruit,1,"Peaches, canned in clear juice",01008,2,c,y,All
+Fruit,1,"Pears, fresh",01009,2,c,y,All
+Fruit,1,"Sultanas, dried",01010,3,c,n,All
+Vegetables,2,"Avocados, fresh",02011,3,c,n,All
+Vegetables,2,"Broccoli, fresh",02012,1,c,y,All
+Vegetables,2,"Cabbage, fresh",02013,2,c,y,All
+Vegetables,2,"Capsicums, fresh",02014,2,c,y,All
+Vegetables,2,"Carrots, fresh",02015,1,c,y,All
+Vegetables,2,"Cauliflower, fresh",02016,2,c,y,All
+Vegetables,2,"Courgettes, fresh",02017,3,c,y,All
+Vegetables,2,"Cucumber, fresh",02018,2,c,y,All
+Vegetables,2,"Lettuce, fresh",02019,1,c,y,All
+Vegetables,2,"Kumara, fresh",02020,2,c,n,"All, Maori"
+Vegetables,2,"Mixed vegetables, frozen",02021,2,c,y,All
+Vegetables,2,"Mushrooms, fresh",02022,1,c,y,All
+Vegetables,2,"Onions, fresh",02023,1,c,y,All
+Vegetables,2,"Peas, fozen",02024,3,c,y,All
+Vegetables,2,"Potatoes, fresh",02025,2,c,y,All
+Vegetables,2,"Potato fries, frozen, superfries, straight cut",02026,1,c,y,All
+Vegetables,2,"Pumpkin, fresh",02027,,c,y,All
+Vegetables,2,"Silverbeet, fresh",02028,2,c,y,All
+Vegetables,2,"Tomatoes, fresh",02029,2,c,y,All
+Vegetables,2,"Tomatoes, canned, drained",02030,3,c,y,All
+Grains,3,"Bread, white",03031,2,c,y,All
+Grains,3,"Bread, wheatmeal",03032,1,c,y,All
+Grains,3,"Bread, wholegrain",03033,2,c,y,All
+Grains,3,Pita bread,03034,2,c,y,All
+Grains,3,"Cake, fruit",03035,1,d,y,All
+Grains,3,"Biscuits, plain gingernut",03036,1,d,y,All
+Grains,3,"Biscuits, chocolate chip",03037,1,d,y,All
+Grains,3,"Biscuits, crackers Shapes",03038,1,d,n,All
+Grains,3,"Muffins, scone",03039,2,d,y,All
+Grains,3,Cornflakes,03040,1,d,n,All
+Grains,3,"Muesli, toasted",03041,2,c,y,All
+Grains,3,Weetbix,03042,4,c,y,All
+Grains,3,Rolled oats,03043,1,c,y,All
+Grains,3,Pasta dried,03044,1,c,y,All
+Grains,3,"Quick noodles, 2 minutes",03045,1,d,y,All
+Grains,3,Brown rice,03046,2,c,n,All
+Grains,3,"Rice, long grain, white",03047,2,c,y,All
+Grains,3,"Spaghetti, canned",03048,2,d,y,All
+Dairy,4,"Cheese, colby",04049,1,c,y,All
+Dairy,4,"Cheese, Edam",04050,2,c,n,All
+Dairy,4,"Milk, trim",04051,1,c,y,All
+Dairy,4,"Milk, standard",04052,2,c,y,All
+Dairy,4,"Yoghurt, full-fat flavoured",04053,1,c,y,All
+Dairy,4,"Yoghurt, natural, low-fat",04054,2,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Eggs,05055,3,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Beef, corned silverside",05056,2,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Beef steak, blade",05057,2,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Beef steak, rump",05058,3,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Beef, mince, stewed",05059,1,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Chicken breast fresh,05060,3,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,chicken pieces with bone,05061,2,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Chicken, whole, pre-cooked",05062,3,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Chicken drumstick,05063,1,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Lamb shoulder chops,05064,2,c,n,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Pork leg roast,05065,1,c,n,"All, Maori, Pacific"
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Bacon, middle rashers",05066,3,d,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Ham, sliced or shaved",05067,2,d,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Sausages,05068,3,d,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Fish fillets, fresh",05069,1,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Tuna, canned",05070,1,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Fish fillets, frozen, multipack",05071,1,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Baked Beans regular,05072,2,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,Hummus dip,05073,1,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Lentils, canned in springwater",05074,1,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Peanuts, plain",05075,1,c,y,All
+"Protein foods: Meat, poultry, seafood, eggs, legumes, nuts",5,"Almonds, plain",05076,3,c,y,All
+Fats & oils,6,Butter,06077,,d,y,All
+Fats & oils,6,"Margarine, mufa regular fat",06078,,c,y,All
+Fats & oils,6,Olive oil,06079,,c,y,All
+Fats & oils,6,Canola oil,06080,,c,y,All
+Snacks,7,"Chocolate, dairy milk block",07081,,d,y,All
+Snacks,7,"Sweets - gum, jelly soft ",07082,,d,y,All
+Snacks,7,"Ice cream, plain",07083,,d,y,All
+Snacks,7,"Muesli Bar, fruit nut choc",07084,,d,y,All
+Snacks,7,"Potato crisps, regular cut",07085,,d,y,All
+"Sauces, dressings, spreads, sugars",8,Jam,08086,,d,y,All
+Sauces,8,Peanut butter,08087,,c,y,All
+Sauces,8,"Vegetable soup, canned",08088,,d,n,All
+Sauces,8,Pasta sauce,08089,,d,y,All
+Sauces,8,"Mayonnaise, regular",08090,,d,y,All
+Sauces,8,Tomato sauce,08091,,d,y,All
+Sauces,8,White sugar,08092,,d,y,All
+Beverages,9,"Milo, powder",09093,,d,y,All
+Beverages,9,Cola,09094,,d,y,All
+Beverages,9,Diet cola,09095,,d,n,All
+Beverages,9,Fruit drink orange,09096,,d,y,All
+Beverages,9,Orange juice,09097,,d,y,All
+Beverages,9,Drink Powder,09098,,d,y,"All, Pacific"
+Takeaway,10,Meat pie,10099,,d,n,All
+Takeaway,10,Whole cooked chicken (supermarket),10100,,d,y,"All, Pacific"
+Takeaway,10,Hot chips,10101,,d,y,All
+Takeaway,10,Battered fish,10102,,d,y,All
+Takeaway,10,Pizza,10103,,d,y,All
+Takeaway,10,Burger,10104,,d,y,All
+Alcohol,11,"Wine, medium white",11105,,d,n,All
+Alcohol,11,"Beer, lager, draught, bitter",11106,,d,n,All
