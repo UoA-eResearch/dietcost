@@ -25,4 +25,4 @@ def get_meal_plan():
 def get_nutrient_targets():
   return meal_planner.nutrient_targets
 
-run(host='localhost', port=8080, debug=True)
+run(host='0.0.0.0', port=8080, debug=True)
