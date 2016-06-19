@@ -127,7 +127,7 @@ def get_diff(nutrients, target):
 
 def get_meal_plan(person='adult women', selected_person_nutrient_targets=None):
 
-  meal = []
+  meal = {}
   
   if not selected_person_nutrient_targets:
     selected_person_nutrient_targets = nutrient_targets[person]
@@ -138,7 +138,9 @@ def get_meal_plan(person='adult women', selected_person_nutrient_targets=None):
 
   for group_name, items in food_groups.items():
     if len(items) > starting_amounts:
-      meal.extend(random.sample(items, starting_amounts))
+      items = random.sample(items, starting_amounts)
+      for item in items:
+        meal[item] = 100
 
   # Iteratively improve
   
@@ -156,7 +158,7 @@ def get_meal_plan(person='adult women', selected_person_nutrient_targets=None):
       continue
     nutrient_target_name = reverse_targetmap[target_nutrient_target_diff]
     # Pick a meal item to improve
-    target_meal_item = random.choice(meal)
+    target_meal_item = random.choice(meal.keys())
     target_meal_item_info = foods[target_meal_item]
     # Get an alternative from it's food group
     items_in_food_group = food_groups[target_meal_item_info['Food group']][:]
@@ -166,8 +168,8 @@ def get_meal_plan(person='adult women', selected_person_nutrient_targets=None):
     # Compare them
     if (diff[target_nutrient_target_diff] < 0 and alternative_meal_item_info['nutrition'][nutrient_target_name] < target_meal_item_info['nutrition'][nutrient_target_name]) or (diff[target_nutrient_target_diff] > 0 and alternative_meal_item_info['nutrition'][nutrient_target_name] > target_meal_item_info['nutrition'][nutrient_target_name]):
       # alternative_meal_item is better - swap it out
-      meal.remove(target_meal_item)
-      meal.append(alternative_meal_item)
+      del meal[target_meal_item]
+      meal[alternative_meal_item] = 100
   
   return {'meal': meal, 'nutrients': nutrients, 'diff': diff}
 
