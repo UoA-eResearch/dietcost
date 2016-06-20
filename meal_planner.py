@@ -144,7 +144,7 @@ def get_meal_plan(person='adult women', selected_person_nutrient_targets=None):
 
   # Iteratively improve
   
-  iteration_limit = 100000
+  iteration_limit = 10000
   
   for i in range(0, iteration_limit):
     nutrients = get_nutrients(meal)
