@@ -1,5 +1,5 @@
 $(document).ready(function() {
-  $.get('/get_nutrient_targets', function(data) {
+  $.get('get_nutrient_targets', function(data) {
     console.log(data);
     for (person in data) {
       $('#person').append("<option>" + person + "</option>")
@@ -10,7 +10,7 @@ $(document).ready(function() {
   });
   function get_meal_plan(variables) {
     $.ajax({
-      url: '/get_meal_plan',
+      url: 'get_meal_plan',
       type: "POST",
       data: JSON.stringify(variables),
       dataType: "json",
