@@ -18,8 +18,10 @@ $(document).ready(function() {
       success: function(data) {
         console.log(data);
         $('#meal_plan #items, #nutrients, #diff').empty();
-        for (var item of data.meal.sort()) {
-          $('#meal_plan #items').append("<li class='collection-item'>" + item + "</li>");
+        var keys = Object.keys(data.meal)
+        for (var k of keys.sort()) {
+          var v = k + ': ' + data.meal[k]; 
+          $('#meal_plan #items').append("<li class='collection-item'>" + v + "g</li>");
         }
         var keys = Object.keys(data.nutrients);
         for (var k of keys.sort()) {
