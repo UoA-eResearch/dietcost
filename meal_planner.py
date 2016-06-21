@@ -88,8 +88,8 @@ for name, data in foods.items():
 for i in range(0, len(nutrientsTargetsSheet), 2):
   minrow = nutrientsTargetsSheet[i]
   maxrow = nutrientsTargetsSheet[i+1]
-  minrow['Energy kJ'] = minrow['Energy MJ'] * 100
-  maxrow['Energy kJ'] = maxrow['Energy MJ'] * 100
+  minrow['Energy kJ'] = minrow['Energy MJ'] * 1000
+  maxrow['Energy kJ'] = maxrow['Energy MJ'] * 1000
   age_gender = minrow['Healthy diet per day'].replace(' min', '')
   nutrient_targets[age_gender] = {'min': minrow, 'max': maxrow}
 
