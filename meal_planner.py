@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import csv
+import xlrd
 import random
 from pprint import pprint
 
@@ -9,81 +9,98 @@ food_ids = {}
 nutrient_targets = {}
 food_groups = {}
 
-# Load knowledge
-
-with open('data/foods.csv') as f:
-  reader = csv.DictReader(f)
-  for row in reader:
-    name = row['Commonly consumed food']
-    foods[name] = row
-    foods[name]['prices'] = []
-    food_ids[row['Commonly consumed food ID']] = name
-    if row['Food group'] not in food_groups:
-      food_groups[row['Food group']] = []
-    food_groups[row['Food group']].append(name)
-
-with open('data/nutrition.csv') as f:
-  reader = csv.DictReader(f)
-  for row in reader:
-    if row['Commonly consumed food'] in foods:
-      floats = {}
-      for k,v, in row.items():
-        try:
-          floats[k] = float(v)
-        except ValueError:
-          pass
-      foods[row['Commonly consumed food']]['nutrition'] = floats
-
-with open('data/prices.csv') as f:
-  reader = csv.DictReader(f)
-  for row in reader:
-    if row['Food Id '] in food_ids:
-      name = food_ids[row['Food Id ']]
-      foods[name]['prices'].append(row)
-
-with open('data/nutrient_targets.csv') as f:
-  reader = csv.DictReader(f)
-  for row in reader:
-    for measure, value in row.items():
-      if '-' in value and '%' in value:
-        bits = [float(x) for x in value.strip('% ').split('-')]
-        row[measure] = {'min': bits[0], 'max': bits[1]}
-      elif '<' in value:
-        value = value.strip('<% E')
-        row[measure] = {'min': float(value)}
-      else:
-        try:
-          if measure in ['Energy MJ', 'fibre g', 'sodium g']:
-            row[measure] = float(value)
-          else:
-            row[measure] = float(value)
-        except ValueError:
-          pass
-      if measure == 'Energy MJ':
-        row['Energy kJ'] = row[measure] * 1000
-    nutrient_targets[row['Age/gender']] = row
-
 targetmap = {
-  'Sodium': 'sodium g',
-  'CHO': 'CHO % energy',
-  'protein':  'protein % energy or grams',
-  'Sat fat': 'Saturated fat % energy',
-  'Fat': 'Fat % energy',
+  'Sodium': 'sodium mg',
+  'CHO': 'CHO grams',
+  'protein':  'protein grams',
+  'Sat fat': 'saturated fat grams',
+  'Fat': 'fat grams',
   'Energy kJ': 'Energy kJ',
-  'Sugars': 'Free sugars % energy*',
-  'Fibre': 'fibre g'
+  'Sugars': 'total sugar grams',
+  'Fibre': 'fibre grams'
 }
 
 reverse_targetmap = {
-  'sodium': 'Sodium g/100g',
-  'CHO % energy': 'CHO g/100g',
-  'protein % energy or grams': 'protein g/100g',
-  'Saturated fat % energy': 'Sat fat g/100g',
-  'Fat % energy': 'Fat g/100g',
+  'sodium mg': 'Sodium g/100g',
+  'CHO grams': 'CHO g/100g',
+  'protein grams': 'protein g/100g',
+  'saturated fat grams': 'Sat fat g/100g',
+  'fat grams': 'Fat g/100g',
   'Energy kJ': 'Energy kJ/100g',
-  'Free sugars % energy': 'Sugars g/100g',
-  'fibre': 'Fibre g/100g'
+  'total sugar grams': 'Sugars g/100g',
+  'fibre grams': 'Fibre g/100g'
 }
+
+def parse_sheet(sheet, header=0, limit=None):
+  headers = []
+  for c in range(sheet.ncols):
+    key = sheet.cell(header, c).value.strip()
+    if key:
+      headers.append(str(key))
+  rows = []
+  if not limit:
+    limit = sheet.nrows
+  else:
+    limit += header + 1
+  for r in range(header+1, limit):
+    row = {}
+    for c in range(len(headers)):
+      row[headers[c]] = sheet.cell(r,c).value
+    rows.append(row)
+  return rows
+
+# Load knowledge
+
+f = "Food prices datasets ehealth 30 May 2016 .xlsx"
+xl_workbook = xlrd.open_workbook(f)
+sheet_names = xl_workbook.sheet_names()
+
+foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
+nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
+nutrientsTargetsSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=14, limit=8)
+foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
+
+for row in foodsSheet:
+  name = row['Commonly consumed food']
+  foods[name] = row
+  foods[name]['prices'] = []
+  food_ids[row['Commonly consumed food ID']] = name
+
+for row in nutrientsSheet:
+  if row['Commonly consumed food ID'] in food_ids:
+    floats = {}
+    for k,v, in row.items():
+      try:
+        if k in reverse_targetmap.values():
+          floats[k] = float(v)
+      except ValueError:
+        floats[k] = 0
+    name = food_ids[row['Commonly consumed food ID']]
+    foods[name]['nutrition'] = floats
+
+#foods = dict([(k,v) for k,v in foods.items() if 'nutrition' in v])
+
+for name, data in foods.items():
+  if data['Food group'] not in food_groups:
+    food_groups[data['Food group']] = []
+  food_groups[data['Food group']].append(name)
+
+for i in range(0, len(nutrientsTargetsSheet), 2):
+  minrow = nutrientsTargetsSheet[i]
+  maxrow = nutrientsTargetsSheet[i+1]
+  minrow['Energy kJ'] = minrow['Energy MJ'] * 100
+  maxrow['Energy kJ'] = maxrow['Energy MJ'] * 100
+  age_gender = minrow['Healthy diet per day'].replace(' min', '')
+  nutrient_targets[age_gender] = {'min': minrow, 'max': maxrow}
+
+for row in foodPricesSheet:
+  try:
+    name = food_ids[row['Food Id']]
+    foods[name]['prices'].append(row)
+  except KeyError:
+    pass
+
+
 
 # Generate a plan
 
@@ -103,29 +120,18 @@ def get_diff(nutrients, target):
 
   for k, v in targetmap.items():
     x = nutrients[k]
-    t = target[v]
-    v = v.strip(' g*')
-    if type(t) is float:
-      diff[v] = x - t
-    elif type(t) is dict:
-      if '%' in v:
-        x /= nutrients['Energy kJ']
-      if 'min' in t and 'max' in t:
-        if x > t['min'] and x < t['max']:
-          diff[v] = 0
-        elif x < t['min']:
-          diff[v] = x - t['min']
-        elif x > t['max']:
-          diff[v] = x - t['max']
-      elif 'min' in t:
-        if x < t['min']:
-          diff[v] = 0
-        else:
-          diff[v] = x - t['min']
+    mn = target['min'][v]
+    mx = target['max'][v]
+    if x > mn and x < mx:
+      diff[v] = 0
+    elif x < mn:
+      diff[v] = x - mn
+    elif x > mx:
+      diff[v] = x - mx
 
   return diff
 
-def get_meal_plan(person='adult women', selected_person_nutrient_targets=None):
+def get_meal_plan(person='adult woman', selected_person_nutrient_targets=None):
 
   meal = {}
   
