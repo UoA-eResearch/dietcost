@@ -51,7 +51,7 @@ def parse_sheet(sheet, header=0, limit=None):
 
 # Load knowledge
 
-f = "Food prices datasets ehealth 30 May 2016 .xlsx"
+f = "dataset.xlsx"
 xl_workbook = xlrd.open_workbook(f)
 sheet_names = xl_workbook.sheet_names()
 
