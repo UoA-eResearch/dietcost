@@ -11,13 +11,13 @@ food_groups = {}
 
 targetmap = {
   'Sodium': 'sodium mg',
-  'CHO': 'CHO grams',
-  'protein':  'protein grams',
-  'Sat fat': 'saturated fat grams',
-  'Fat': 'fat grams',
+  'CHO': 'CHO % energy',
+  'protein':  'protein % energy',
+  'Sat fat': 'Saturated fat % energy',
+  'Fat': 'Fat % energy',
   'Energy kJ': 'Energy kJ',
-  'Sugars': 'total sugar grams',
-  'Fibre': 'fibre grams'
+  'Sugars': 'Free sugars % energy*',
+  'Fibre': 'fibre g'
 }
 
 reverse_targetmap = {
@@ -35,8 +35,7 @@ def parse_sheet(sheet, header=0, limit=None):
   headers = []
   for c in range(sheet.ncols):
     key = sheet.cell(header, c).value.strip()
-    if key:
-      headers.append(str(key))
+    headers.append(str(key))
   rows = []
   if not limit:
     limit = sheet.nrows
@@ -45,7 +44,12 @@ def parse_sheet(sheet, header=0, limit=None):
   for r in range(header+1, limit):
     row = {}
     for c in range(len(headers)):
-      row[headers[c]] = sheet.cell(r,c).value
+      header = headers[c]
+      index = 1
+      while header in row:
+        header = '{}_{}'.format(headers[c], index)
+        index += 1
+      row[header] = sheet.cell(r,c).value
     rows.append(row)
   return rows
 
@@ -57,14 +61,32 @@ sheet_names = xl_workbook.sheet_names()
 
 foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
 nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
-nutrientsTargetsSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=14, limit=8)
-foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
+nutrientsTargetsSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=0, limit=4)
+foodConstraintsSheet = parse_sheet(xl_workbook.sheet_by_name('Food constraints H'), header=2)
+foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
 
 for row in foodsSheet:
   name = row['Commonly consumed food']
   foods[name] = row
   foods[name]['prices'] = []
   food_ids[row['Commonly consumed food ID']] = name
+
+for row in foodConstraintsSheet:
+  try:
+    name = food_ids[row['Food ID']]
+    # per week
+    foods[name]['constraints'] = {
+      '14 boy': {'min': row['Min_1'], 'max': row['Max_1']},
+      '7 girl': {'min': row['Min_2'], 'max': row['max']},
+      'adult man': {'min': row['Min'], 'max': row['Max']},
+      'adult women': {'min': row[''], 'max': row['_1']}
+    }
+    try:
+      foods[name]['serve size'] = int(row['serve size'])
+    except ValueError:
+      pass
+  except KeyError:
+    pass
 
 for row in nutrientsSheet:
   if row['Commonly consumed food ID'] in food_ids:
@@ -85,33 +107,39 @@ for name, data in foods.items():
     food_groups[data['Food group']] = []
   food_groups[data['Food group']].append(name)
 
-for i in range(0, len(nutrientsTargetsSheet), 2):
-  minrow = nutrientsTargetsSheet[i]
-  maxrow = nutrientsTargetsSheet[i+1]
-  minrow['Energy kJ'] = minrow['Energy MJ'] * 1000
-  maxrow['Energy kJ'] = maxrow['Energy MJ'] * 1000
-  age_gender = minrow['Healthy diet per day'].replace(' min', '')
-  nutrient_targets[age_gender] = {'min': minrow, 'max': maxrow}
+for row in nutrientsTargetsSheet:
+  for measure, value in row.items():
+    if type(value) is unicode:
+      if '-' in value and '%' in value:
+        bits = [float(x) for x in value.strip('% ').split('-')]
+        row[measure] = {'min': bits[0], 'max': bits[1]}
+      elif '<' in value:
+        value = value.strip('<% E')
+        row[measure] = {'min': float(value)}
+    if measure == 'Energy MJ':
+      row['Energy kJ'] = row[measure] * 1000
+  nutrient_targets[row['Healthy diet per day']] = row
 
 for row in foodPricesSheet:
   try:
-    name = food_ids[row['Food Id']]
-    foods[name]['prices'].append(row)
+    name = food_ids[row['Commonly consumed food ID']]
+    foods[name]['price/100g'] = row['price/100g']
   except KeyError:
     pass
-
-
 
 # Generate a plan
 
 def get_nutrients(meal):
-  nutrients = [foods[item]['nutrition'] for item in meal]
-  nutrients_sum = dict([(k.strip(' g/10'), v) for k,v in nutrients[0].items()])
+  nutrients_sum = {}
 
-  for n in nutrients[1:]:
-    for measure, value in n.items():
+  for food, amount in meal.items():
+    for measure, value in foods[food]['nutrition'].items():
       measure = measure.strip(' g/10')
-      nutrients_sum[measure] += value
+      value *= amount
+      if measure in nutrients_sum:
+        nutrients_sum[measure] += value
+      else:
+        nutrients_sum[measure] = value
 
   return nutrients_sum
 
@@ -120,62 +148,63 @@ def get_diff(nutrients, target):
 
   for k, v in targetmap.items():
     x = nutrients[k]
-    mn = target['min'][v]
-    mx = target['max'][v]
-    if x > mn and x < mx:
-      diff[v] = 0
-    elif x < mn:
-      diff[v] = x - mn
-    elif x > mx:
-      diff[v] = x - mx
+    t = target[v]
+    if v == 'sodium mg':
+      v = 'sodium g'
+      t /= 1000
+    #v = v.strip(' g*')
+    if type(t) is float:
+      diff[v] = x - t
+    elif type(t) is dict:
+      # Convert g to % E
+      if k == 'Fat':
+        x = (x * 37.7) / nutrients['Energy kJ']
+      if k == 'CHO' or k == 'protein':
+        x = (x * 16.7) / nutrients['Energy kJ']
+      if 'min' in t and 'max' in t:
+        if x > t['min'] and x < t['max']:
+          diff[v] = 0
+        elif x < t['min']:
+          diff[v] = x - t['min']
+        elif x > t['max']:
+          diff[v] = x - t['max']
+      elif 'min' in t:
+        if x < t['min']:
+          diff[v] = 0
+        else:
+          diff[v] = x - t['min']
 
   return diff
 
-def get_meal_plan(person='adult woman', selected_person_nutrient_targets=None):
+def get_meal_plan(person='adult women', selected_person_nutrient_targets=None):
 
   meal = {}
   
   if not selected_person_nutrient_targets:
+    # per day
     selected_person_nutrient_targets = nutrient_targets[person]
+  
+  for measure in selected_person_nutrient_targets:
+    try:
+      selected_person_nutrient_targets[measure] *= 7
+    except TypeError:
+      pass
 
   # Get a random starting meal plan
-  
-  starting_amounts = 1
 
-  for group_name, items in food_groups.items():
-    if len(items) > starting_amounts:
-      items = random.sample(items, starting_amounts)
-      for item in items:
-        meal[item] = 100
+  for food, details in foods.items():
+    try:
+      meal[food] = details['constraints'][person]['min']
+    except KeyError:
+      pass
 
   # Iteratively improve
   
-  iteration_limit = 10000
+  pprint(selected_person_nutrient_targets)
   
-  for i in range(0, iteration_limit):
-    nutrients = get_nutrients(meal)
+  nutrients = get_nutrients(meal)
 
-    diff = get_diff(nutrients, selected_person_nutrient_targets)
-    
-    # Pick a nutritional measure to improve
-    target_nutrient_target_diff = random.choice(diff.keys())
-    if diff[target_nutrient_target_diff] == 0:
-      # Can't improve on perfection
-      continue
-    nutrient_target_name = reverse_targetmap[target_nutrient_target_diff]
-    # Pick a meal item to improve
-    target_meal_item = random.choice(meal.keys())
-    target_meal_item_info = foods[target_meal_item]
-    # Get an alternative from it's food group
-    items_in_food_group = food_groups[target_meal_item_info['Food group']][:]
-    items_in_food_group.remove(target_meal_item)
-    alternative_meal_item = random.choice(items_in_food_group)
-    alternative_meal_item_info = foods[alternative_meal_item]
-    # Compare them
-    if (diff[target_nutrient_target_diff] < 0 and alternative_meal_item_info['nutrition'][nutrient_target_name] < target_meal_item_info['nutrition'][nutrient_target_name]) or (diff[target_nutrient_target_diff] > 0 and alternative_meal_item_info['nutrition'][nutrient_target_name] > target_meal_item_info['nutrition'][nutrient_target_name]):
-      # alternative_meal_item is better - swap it out
-      del meal[target_meal_item]
-      meal[alternative_meal_item] = 100
+  diff = get_diff(nutrients, selected_person_nutrient_targets)
   
   return {'meal': meal, 'nutrients': nutrients, 'diff': diff}
 
