@@ -135,7 +135,8 @@ def get_nutrients(meal):
   for food, amount in meal.items():
     for measure, value in foods[food]['nutrition'].items():
       measure = measure.strip(' g/10')
-      value *= amount
+      # Nutrient values are per 100g, amount is how many g
+      value = (value / 100) * amount
       if measure in nutrients_sum:
         nutrients_sum[measure] += value
       else:
@@ -149,10 +150,6 @@ def get_diff(nutrients, target):
   for k, v in targetmap.items():
     x = nutrients[k]
     t = target[v]
-    if v == 'sodium mg':
-      v = 'sodium g'
-      t /= 1000
-    #v = v.strip(' g*')
     if type(t) is float:
       diff[v] = x - t
     elif type(t) is dict:
