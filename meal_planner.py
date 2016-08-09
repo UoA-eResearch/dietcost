@@ -157,9 +157,9 @@ def get_diff(nutrients, target):
       diff[v] = x - t
     elif type(t) is dict:
       # Convert g to % E
-      if k == 'Fat':
+      if k == 'Fat' or k == 'Sat fat':
         x = (x * 37.7) / nutrients['Energy kJ']
-      if k == 'CHO' or k == 'protein':
+      if k == 'CHO' or k == 'protein' or k == 'Sugars':
         x = (x * 16.7) / nutrients['Energy kJ']
       if 'min' in t and 'max' in t:
         if x > t['min'] and x < t['max']:
