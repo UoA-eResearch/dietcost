@@ -150,6 +150,13 @@ def get_nutrients(meal):
       else:
         nutrients_sum[measure] = value
 
+  # Convert g to % E
+  for k, v in nutrients_sum.items():
+    if k == 'Fat' or k == 'Sat fat':
+      nutrients_sum[k] = ((v * 37.7) / nutrients_sum['Energy kJ']) * 100
+    if k == 'CHO' or k == 'protein' or k == 'Sugars':
+      nutrients_sum[k] = ((v * 16.7) / nutrients_sum['Energy kJ']) * 100
+
   return nutrients_sum
 
 def get_diff(nutrients, target):
@@ -161,11 +168,6 @@ def get_diff(nutrients, target):
     if type(t) is float:
       diff[v] = x - t
     elif type(t) is dict:
-      # Convert g to % E
-      if k == 'Fat' or k == 'Sat fat':
-        x = ((x * 37.7) / nutrients['Energy kJ']) * 100
-      if k == 'CHO' or k == 'protein' or k == 'Sugars':
-        x = ((x * 16.7) / nutrients['Energy kJ']) * 100
       if 'min' in t and 'max' in t:
         if x > t['min'] and x < t['max']:
           diff[v] = 0
@@ -184,7 +186,7 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 20000):
 
   meal = {}
   meal_plans = []
@@ -261,7 +263,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     print('{} have {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
     if len(r) > 0:
       new_val = random.choice(r)
-      print("Changing {} from {} to {}".format(food, meal[food], new_val))
+      print("Changing {} from {}g to {}g".format(food, meal[food], new_val))
       meal[food] = new_val
         
   pprint(meal)
