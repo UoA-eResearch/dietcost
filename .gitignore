@@ -2,3 +2,4 @@
 load_csv_to_mysql.py
 .~lock*
 *.swp
+output.txt
