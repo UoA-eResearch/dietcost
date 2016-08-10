@@ -5,6 +5,7 @@ import random
 from pprint import pprint
 import numpy as np
 import time
+import copy
 
 foods = {}
 food_ids = {}
@@ -39,6 +40,7 @@ target_to_measure = {
 }
 
 SERVE_SIZE = .5
+MAX_SCALE = 2
 
 def parse_sheet(sheet, header=0, limit=None):
   headers = []
@@ -71,7 +73,8 @@ sheet_names = xl_workbook.sheet_names()
 foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
 nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
 nutrientsTargetsSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=0, limit=4)
-foodConstraintsSheet = parse_sheet(xl_workbook.sheet_by_name('Food constraints H'), header=2)
+foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Food constraints H'), header=2)
+#foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C'), header=2)
 foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
 
 for row in foodsSheet:
@@ -79,15 +82,15 @@ for row in foodsSheet:
   foods[name] = row
   food_ids[row['Commonly consumed food ID']] = name
 
-for row in foodConstraintsSheet:
+for row in foodConstraintsHSheet:
   try:
     name = food_ids[row['Food ID']]
     # per week
     foods[name]['constraints'] = {
-      '14 boy': {'min': row['Min_1'], 'max': row['Max_1']},
-      '7 girl': {'min': row['Min_2'], 'max': row['max']},
-      'adult man': {'min': row['Min'], 'max': row['Max']},
-      'adult women': {'min': row[''], 'max': row['_1']}
+      '14 boy': {'min': row['Min_1'], 'max': row['Max_1'] * MAX_SCALE},
+      '7 girl': {'min': row['Min_2'], 'max': row['max'] * MAX_SCALE},
+      'adult man': {'min': row['Min'], 'max': row['Max'] * MAX_SCALE},
+      'adult women': {'min': row[''], 'max': row['_1'] * MAX_SCALE}
     }
     try:
       foods[name]['serve size'] = int(row['serve size'])
@@ -192,10 +195,10 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 100000):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000):
 
   meal = {}
-  meal_plans = []
+  meal_plans = {}
   
   if not selected_person_nutrient_targets:
     # per day
@@ -237,9 +240,11 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   for i in range(iteration_limit):
     nutrients = get_nutrients(meal)
     diff = get_diff(nutrients, selected_person_nutrient_targets)
+    diff['Free sugars % energy*'] = 0 # Disable sugar check
     print('Iteration: {}'.format(i))
     if check_nutritional_diff(diff):
-      meal_plans.append(meal)
+      h = hash(frozenset(meal.items()))
+      meal_plans[h] = copy.copy(meal)
       target_measure = None
       print('Hit!')
     else:
@@ -294,3 +299,4 @@ if __name__ == "__main__":
   print('iterations done, took {}s'.format(e-s))
   print('Matched meals:')
   pprint(meal_plans)
+  print('{} matched meals'.format(len(meal_plans)))
