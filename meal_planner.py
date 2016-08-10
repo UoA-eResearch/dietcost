@@ -148,9 +148,9 @@ def get_diff(nutrients, target):
     elif type(t) is dict:
       # Convert g to % E
       if k == 'Fat' or k == 'Sat fat':
-        x = (x * 37.7) / nutrients['Energy kJ']
+        x = ((x * 37.7) / nutrients['Energy kJ']) * 100
       if k == 'CHO' or k == 'protein' or k == 'Sugars':
-        x = (x * 16.7) / nutrients['Energy kJ']
+        x = ((x * 16.7) / nutrients['Energy kJ']) * 100
       if 'min' in t and 'max' in t:
         if x > t['min'] and x < t['max']:
           diff[v] = 0
@@ -194,7 +194,10 @@ def get_meal_plans(person='adult women', selected_person_nutrient_targets=None, 
 
   for food, details in foods.items():
     try:
-      meal[food] = details['constraints'][person]['min']
+      t = foods[food]['constraints'][person]
+      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] / 2))
+      if len(r) > 0:
+        meal[food] = random.choice(r)
     except KeyError:
       pass
 
