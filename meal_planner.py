@@ -4,11 +4,14 @@ import xlrd
 import random
 from pprint import pprint
 import numpy as np
+import time
 
 foods = {}
 food_ids = {}
 nutrient_targets = {}
 food_groups = {}
+
+s = time.time()
 
 # Used to match nutritional information to nutritional targets
 targetmap = {
@@ -135,6 +138,9 @@ for row in foodPricesSheet:
   except KeyError:
     pass
 
+e = time.time()
+print('load done, took {}s'.format(e-s))
+
 # Generate a plan
 
 def get_nutrients(meal):
@@ -186,7 +192,7 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 20000):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 100000):
 
   meal = {}
   meal_plans = []
@@ -209,6 +215,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   # Get a random starting meal plan
 
+  combinations = 1
+
   for food, details in foods.items():
     try:
       t = foods[food]['constraints'][person]
@@ -216,9 +224,12 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       #sugars = foods[food]['nutrition']['Sugars g/100g']
       if len(r) > 0: # and sugars < 10:
         meal[food] = random.choice(r)
+        combinations *= len(r)
     except KeyError:
       pass
 
+  print('{} items in menu'.format(len(meal)))
+  print('{} distinct possible menus'.format(combinations))
   # Iteratively improve
   
   for i in range(iteration_limit):
@@ -265,12 +276,19 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       new_val = random.choice(r)
       print("Changing {} from {}g to {}g".format(food, meal[food], new_val))
       meal[food] = new_val
-        
+
+  print('last meal')
   pprint(meal)
+  print('nutritional diff')
   pprint(diff)
+  print('nutrients')
   pprint(nutrients)
   return meal_plans
 
 if __name__ == "__main__":
+  s = time.time()
   meal_plans = get_meal_plans()
+  e = time.time()
+  print('iterations done, took {}'.format(e-s))
+  print('Matched meals:')
   pprint(meal_plans)
