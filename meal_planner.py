@@ -213,6 +213,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     except TypeError:
       pass
 
+  print('{} selected. nutritional targets:'.format(person))
   # Get a random starting meal plan
 
   combinations = 1
@@ -289,6 +290,6 @@ if __name__ == "__main__":
   s = time.time()
   meal_plans = get_meal_plans()
   e = time.time()
-  print('iterations done, took {}'.format(e-s))
+  print('iterations done, took {}s'.format(e-s))
   print('Matched meals:')
   pprint(meal_plans)
