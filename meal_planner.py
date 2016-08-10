@@ -22,6 +22,19 @@ targetmap = {
   'Fibre': 'fibre g'
 }
 
+reverse_targetmap = {
+  'sodium mg': 'Sodium g/100g',
+  'CHO % energy': 'CHO g/100g',
+  'protein % energy': 'protein g/100g',
+  'Saturated fat % energy': 'Sat fat g/100g',
+  'Fat % energy': 'Fat g/100g',
+  'Energy kJ': 'Energy kJ/100g',
+  'Free sugars % energy*': 'Sugars g/100g',
+  'fibre g': 'Fibre g/100g'
+}
+
+SERVE_SIZE = .5
+
 def parse_sheet(sheet, header=0, limit=None):
   headers = []
   for c in range(sheet.ncols):
@@ -169,7 +182,7 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult women', selected_person_nutrient_targets=None, iteration_limit = 10000):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000):
 
   meal = {}
   meal_plans = []
@@ -195,7 +208,7 @@ def get_meal_plans(person='adult women', selected_person_nutrient_targets=None, 
   for food, details in foods.items():
     try:
       t = foods[food]['constraints'][person]
-      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] / 2))
+      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
       if len(r) > 0:
         meal[food] = random.choice(r)
     except KeyError:
@@ -204,21 +217,51 @@ def get_meal_plans(person='adult women', selected_person_nutrient_targets=None, 
   # Iteratively improve
   
   for i in range(iteration_limit):
-    food = random.choice(meal.keys())
-    try:
-      t = foods[food]['constraints'][person]
-      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] / 2))
-      if len(r) > 0:
-        meal[food] = random.choice(r)
-    except KeyError:
-      pass
-  
     nutrients = get_nutrients(meal)
     diff = get_diff(nutrients, selected_person_nutrient_targets)
 
     if check_nutritional_diff(diff):
       meal_plans.append(meal)
-  
+      target_measure = None
+    else:
+      off_measures = []
+      for measure, value in diff.items():
+        if value != 0:
+          off_measures.append(measure)
+      target_measure = random.choice(off_measures)
+      reverse_target_measure = reverse_targetmap[target_measure]
+
+    if target_measure:
+      foods_that_impact_this_measure = []
+      for item in meal:
+        try:
+          if foods[item]['nutrition'][reverse_target_measure] != 0:
+            foods_that_impact_this_measure.append(item)
+        except KeyError as e:
+          # Nutrional info for this food/target not known
+          pass
+      food = random.choice(foods_that_impact_this_measure)
+      t = foods[food]['constraints'][person]
+      if diff[target_measure] > 0:
+        print("We're too high on {}".format(target_measure))
+        r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * SERVE_SIZE))
+      else:
+        print("We're too low on {}".format(target_measure))
+        r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * SERVE_SIZE))
+    else:
+      food = random.choice(meal.keys())
+      t = foods[food]['constraints'][person]
+      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
+    
+    print('{} must be between {}-{}. Options {} - current {}'.format(food, t['min'], t['max'], r, meal[food]))
+    if len(r) > 0:
+      new_val = random.choice(r)
+      print("Changing {} from {} to {}".format(food, meal[food], new_val))
+      meal[food] = new_val
+        
+  pprint(meal)
+  pprint(diff)
+  pprint(nutrients)
   return meal_plans
 
 if __name__ == "__main__":
