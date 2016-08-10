@@ -214,6 +214,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       pass
 
   print('{} selected. nutritional targets:'.format(person))
+  pprint(selected_person_nutrient_targets)
   # Get a random starting meal plan
 
   combinations = 1
