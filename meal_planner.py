@@ -22,7 +22,9 @@ targetmap = {
   'Fibre': 'fibre g'
 }
 
-reverse_targetmap = {
+reverse_targetmap = dict([(v,k) for k,v in targetmap.items()])
+
+target_to_measure = {
   'sodium mg': 'Sodium g/100g',
   'CHO % energy': 'CHO g/100g',
   'protein % energy': 'protein g/100g',
@@ -209,7 +211,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     try:
       t = foods[food]['constraints'][person]
       r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
-      if len(r) > 0:
+      #sugars = foods[food]['nutrition']['Sugars g/100g']
+      if len(r) > 0: # and sugars < 10:
         meal[food] = random.choice(r)
     except KeyError:
       pass
@@ -219,17 +222,18 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   for i in range(iteration_limit):
     nutrients = get_nutrients(meal)
     diff = get_diff(nutrients, selected_person_nutrient_targets)
-
+    print('Iteration: {}'.format(i))
     if check_nutritional_diff(diff):
       meal_plans.append(meal)
       target_measure = None
+      print('Hit!')
     else:
       off_measures = []
       for measure, value in diff.items():
         if value != 0:
           off_measures.append(measure)
       target_measure = random.choice(off_measures)
-      reverse_target_measure = reverse_targetmap[target_measure]
+      reverse_target_measure = target_to_measure[target_measure]
 
     if target_measure:
       foods_that_impact_this_measure = []
@@ -242,18 +246,19 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           pass
       food = random.choice(foods_that_impact_this_measure)
       t = foods[food]['constraints'][person]
+      nt = selected_person_nutrient_targets[target_measure]
       if diff[target_measure] > 0:
-        print("We're too high on {}".format(target_measure))
+        print("We're too high on {} - {} > {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['max']))
         r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * SERVE_SIZE))
       else:
-        print("We're too low on {}".format(target_measure))
+        print("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * SERVE_SIZE))
     else:
       food = random.choice(meal.keys())
       t = foods[food]['constraints'][person]
       r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
     
-    print('{} must be between {}-{}. Options {} - current {}'.format(food, t['min'], t['max'], r, meal[food]))
+    print('{} have {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
     if len(r) > 0:
       new_val = random.choice(r)
       print("Changing {} from {} to {}".format(food, meal[food], new_val))
