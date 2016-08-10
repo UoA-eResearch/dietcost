@@ -273,7 +273,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       t = foods[food]['constraints'][person]
       r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
     
-    print('{} have {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
+    print('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
     if len(r) > 0:
       new_val = random.choice(r)
       print("Changing {} from {}g to {}g".format(food, meal[food], new_val))
