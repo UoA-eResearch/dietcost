@@ -129,11 +129,11 @@ for row in nutrientsTargetsSheet:
         n[measure] = {'min': bits[0], 'max': bits[1]}
       elif '<' in value:
         value = value.strip('<% E')
-        n[measure] = {'max': float(value)}
+        n[measure] = {'min': 0, 'max': float(value)}
     if measure == 'Energy MJ':
       n['Energy kJ'] = {'min': (value - (value * 0.015)) * 1000, 'max': (value + (value * 0.015)) * 1000}
     elif measure == 'sodium mg':
-      n[measure] = {'max': value}
+      n[measure] = {'min': 0, 'max': value}
     elif measure == 'fibre g':
       n[measure] = {'min': value - (value*0.015), 'max': value + (value*0.5)}
   nutrient_targets[row['Healthy diet per day']] = n
