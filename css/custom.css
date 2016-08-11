@@ -1,0 +1,10 @@
+.price {
+  display: inline-block;
+  width: 50%;
+}
+
+.variety {
+  display: inline-block;
+  width: 50%;
+  text-align: right;
+}

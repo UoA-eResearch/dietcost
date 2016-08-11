@@ -11,6 +11,7 @@ $(document).ready(function() {
     return Math.round(float * 100) / 100;
   }
   function get_meal_plans(variables) {
+    $('#progress').show();
     $.ajax({
       url: 'get_meal_plans',
       type: "POST",
@@ -18,8 +19,11 @@ $(document).ready(function() {
       dataType: "json",
       contentType: "application/json",
       success: function(data) {
+        $('#progress').hide();
         console.log(data);
         $('#meal_plans').empty();
+        var totalPrice = 0;
+        var totalVariety = 0;
         for (var hash in data) {
           var o = data[hash];
           var items = "";
@@ -27,10 +31,18 @@ $(document).ready(function() {
           for (var i in keys) {
             var k = keys[i];
             var amount = o.meal[k];
-            items += "<li class='collection-item'>" + k + ": " + round(amount) + "g</li>";
+            items += "<tr><td>" + k + "</td><td>" + round(amount) + "g</td></tr>";
           }
-          $('#meal_plans').append("<div class='col s12 m6'><div class='card'><div class='card-content'><p><ul class='collection'>" + items + "</ul></p></div><div class='card-action'><p class='price'>Price: $" + round(o.price) + "</p><p class='variety'>Variety: " + round(o.variety) + "</p></div></div></div>");
+          var table = "<table class='highlight bordered'><thead><tr><th data-field='name'>Name</th><th data-field='amount'>Amount</th></tr></thead><tbody>" + items + "</tbody></table>";
+          var collapsibleTable = "<ul class='collapsible' data-collapsible='accordion'><li><div class='collapsible-header'><i class='material-icons'>receipt</i>Items</div><div class='collapsible-body'>" + table + "</div></li></ul>";
+          var card = "<div class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'><p class='price'>Price: $" + round(o.price) + "</p><p class='variety'>Variety: " + round(o.variety) + "</p></div></div></div>";
+          $('#meal_plans').append(card);
+          totalPrice += o.price;
+          totalVariety += o.variety;
         }
+        $('.collapsible').collapsible();
+        var l = Object.keys(data).length;
+        $('#summary').html("Total meal plans: " + l + ". Average price: $" + round(totalPrice / l) + ". Average variety: " + round(totalVariety / l));
       }
     });
   }
