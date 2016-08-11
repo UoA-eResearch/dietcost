@@ -2,7 +2,11 @@ $(document).ready(function() {
   $.get('get_nutrient_targets', function(data) {
     console.log(data);
     for (person in data) {
-      $('#person').append("<option>" + person + "</option>")
+      var selected = '';
+      if (person == 'adult man') {
+        selected = 'selected';
+      }
+      $('#person').append("<option " + selected + ">" + person + "</option>")
       var fields = data[person];
     }
     $('#person').material_select();
@@ -46,7 +50,7 @@ $(document).ready(function() {
       }
     });
   }
-  get_meal_plans({});
+  get_meal_plans({person: 'adult man'});
   $('#nutritional_constraints').submit(function( e ) {
     e.preventDefault();
     var variables = {}
