@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 import meal_planner
-from bottle import get, post, request, run, static_file
+from bottle import *
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('web_server')
 
 @get('/')
 def index():
@@ -15,11 +19,13 @@ def css(filename):
 def js(filename):
   return static_file(filename, './js')
 
-@post('/get_meal_plan')
+@route('/get_meal_plans')
 def get_meal_plan():
-  if 'person' in request.json:
-    return meal_planner.get_meal_plan(request.json['person'])
-  return meal_planner.get_meal_plan()
+  person = request.params.person or 'adult man'
+  nutrient_targets = request.params.nutrient_targets
+  iterations = request.params.iterations or 10000
+  logger.info('request recieved, person={}, nutrient_targets={}, iterations={}'.format(person, nutrient_targets, iterations))
+  return meal_planner.get_meal_plans(person, nutrient_targets, iterations)
 
 @get('/get_nutrient_targets')
 def get_nutrient_targets():

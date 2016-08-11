@@ -2,10 +2,14 @@
 
 import xlrd
 import random
-from pprint import pprint
+import pprint
 import numpy as np
 import time
 import copy
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('meal_planner')
 
 foods = {}
 food_ids = {}
@@ -142,7 +146,7 @@ for row in foodPricesSheet:
     pass
 
 e = time.time()
-print('load done, took {}s'.format(e-s))
+logger.debug('load done, took {}s'.format(e-s))
 
 # Generate a plan
 
@@ -196,6 +200,7 @@ def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
 def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000):
+  s = time.time()
 
   meal = {}
   meal_plans = {}
@@ -216,8 +221,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     except TypeError:
       pass
 
-  print('{} selected. nutritional targets:'.format(person))
-  pprint(selected_person_nutrient_targets)
+  logger.debug('{} selected. nutritional targets: {}'.format(person, selected_person_nutrient_targets))
   # Get a random starting meal plan
 
   combinations = 1
@@ -226,27 +230,31 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     try:
       t = foods[food]['constraints'][person]
       r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
-      #sugars = foods[food]['nutrition']['Sugars g/100g']
-      if len(r) > 0: # and sugars < 10:
+      if len(r) > 0:
         meal[food] = random.choice(r)
         combinations *= len(r)
     except KeyError:
       pass
 
-  print('{} items in menu'.format(len(meal)))
-  print('{} distinct possible menus'.format(combinations))
+  logger.debug('{} items in menu. {} distinct possible menus'.format(len(meal), combinations))
   # Iteratively improve
   
   for i in range(iteration_limit):
     nutrients = get_nutrients(meal)
     diff = get_diff(nutrients, selected_person_nutrient_targets)
     diff['Free sugars % energy*'] = 0 # Disable sugar check
-    print('Iteration: {}'.format(i))
+    logger.debug('Iteration: {}'.format(i))
     if check_nutritional_diff(diff):
       h = hash(frozenset(meal.items()))
-      meal_plans[h] = copy.copy(meal)
+      price = 0
+      variety = 0
+      for item, amount in meal.items():
+        price += foods[item]['price/100g'] / 100 * amount
+        variety += foods[item]['Variety']
+      variety /= len(meal)
+      meal_plans[h] = {'meal': copy.copy(meal), 'price': price, 'variety': variety}
       target_measure = None
-      print('Hit!')
+      logger.debug('Hit!')
     else:
       off_measures = []
       for measure, value in diff.items():
@@ -268,35 +276,30 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       t = foods[food]['constraints'][person]
       nt = selected_person_nutrient_targets[target_measure]
       if diff[target_measure] > 0:
-        print("We're too high on {} - {} > {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['max']))
+        logger.debug("We're too high on {} - {} > {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['max']))
         r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * SERVE_SIZE))
       else:
-        print("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
+        logger.debug("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * SERVE_SIZE))
     else:
       food = random.choice(meal.keys())
       t = foods[food]['constraints'][person]
       r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
     
-    print('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
+    logger.debug('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
     if len(r) > 0:
       new_val = random.choice(r)
-      print("Changing {} from {}g to {}g".format(food, meal[food], new_val))
+      logger.debug("Changing {} from {}g to {}g".format(food, meal[food], new_val))
       meal[food] = new_val
 
-  print('last meal')
-  pprint(meal)
-  print('nutritional diff')
-  pprint(diff)
-  print('nutrients')
-  pprint(nutrients)
+  logger.debug('last meal: {}\nnutritional diff: {}\nnutrients: {}'.format(pprint.pformat(meal), pprint.pformat(diff), pprint.pformat(nutrients)))
+  
+  e = time.time()
+  logger.info('iterations done, took {}s'.format(e-s))
+  logger.debug('Matched meals: {}'.format(pprint.pformat(meal_plans)))
+  logger.info('{} matched meals'.format(len(meal_plans)))
   return meal_plans
 
 if __name__ == "__main__":
-  s = time.time()
+  logger.setLevel(logging.DEBUG)
   meal_plans = get_meal_plans()
-  e = time.time()
-  print('iterations done, took {}s'.format(e-s))
-  print('Matched meals:')
-  pprint(meal_plans)
-  print('{} matched meals'.format(len(meal_plans)))
