@@ -22,9 +22,9 @@ def js(filename):
 @get('/get_meal_plans')
 @post('/get_meal_plans')
 def get_meal_plan():
-  person = request.params.person or 'adult man'
-  nutrient_targets = request.params.nutrient_targets
-  iterations = request.params.iterations or 10000
+  person = request.params.person or request.json.get('person') or 'adult man'
+  nutrient_targets = request.params.nutrient_targets or request.json.get('nutrient_targets')
+  iterations = request.params.iterations or request.json.get('iterations') or 10000
   logger.info('request recieved, person={}, nutrient_targets={}, iterations={}'.format(person, nutrient_targets, iterations))
   return meal_planner.get_meal_plans(person, nutrient_targets, iterations)
 
