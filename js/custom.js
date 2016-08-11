@@ -4,44 +4,42 @@ $(document).ready(function() {
     for (person in data) {
       $('#person').append("<option>" + person + "</option>")
       var fields = data[person];
-      console.log(fields);
     }
     $('#person').material_select();
   });
-  function get_meal_plan(variables) {
+  function round(float) {
+    return Math.round(float * 100) / 100;
+  }
+  function get_meal_plans(variables) {
     $.ajax({
-      url: 'get_meal_plan',
+      url: 'get_meal_plans',
       type: "POST",
       data: JSON.stringify(variables),
       dataType: "json",
       contentType: "application/json",
       success: function(data) {
         console.log(data);
-        $('#meal_plan #items, #nutrients, #diff').empty();
-        var keys = Object.keys(data.meal)
-        for (var k of keys.sort()) {
-          var v = k + ': ' + data.meal[k]; 
-          $('#meal_plan #items').append("<li class='collection-item'>" + v + "g</li>");
-        }
-        var keys = Object.keys(data.nutrients);
-        for (var k of keys.sort()) {
-          var v = k + ': ' + Math.round(data.nutrients[k] * 100) / 100;
-          $('#meal_plan #nutrients').append("<li class='collection-item'>" + v + "</li>");
-        }
-        var keys = Object.keys(data.diff);
-        for (var k of keys.sort()) {
-          var v = k + ': ' + Math.round(data.diff[k] * 100) / 100;
-          $('#meal_plan #diff').append("<li class='collection-item'>" + v + "</li>");
+        $('#meal_plans').empty();
+        for (var hash in data) {
+          var o = data[hash];
+          var items = "";
+          var keys = Object.keys(o.meal).sort();
+          for (var i in keys) {
+            var k = keys[i];
+            var amount = o.meal[k];
+            items += "<li class='collection-item'>" + k + ": " + round(amount) + "g</li>";
+          }
+          $('#meal_plans').append("<div class='col s12 m6'><div class='card'><div class='card-content'><p><ul class='collection'>" + items + "</ul></p></div><div class='card-action'><p class='price'>Price: $" + round(o.price) + "</p><p class='variety'>Variety: " + round(o.variety) + "</p></div></div></div>");
         }
       }
     });
   }
-  get_meal_plan({});
+  get_meal_plans({});
   $('#nutritional_constraints').submit(function( e ) {
     e.preventDefault();
     var variables = {}
     $(this).serializeArray().map(function(x){variables[x.name] = x.value;});
     console.log(variables);
-    get_meal_plan(variables);
+    get_meal_plans(variables);
   });
 });

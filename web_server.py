@@ -19,7 +19,8 @@ def css(filename):
 def js(filename):
   return static_file(filename, './js')
 
-@route('/get_meal_plans')
+@get('/get_meal_plans')
+@post('/get_meal_plans')
 def get_meal_plan():
   person = request.params.person or 'adult man'
   nutrient_targets = request.params.nutrient_targets

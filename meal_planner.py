@@ -207,7 +207,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   
   if not selected_person_nutrient_targets:
     # per day
-    selected_person_nutrient_targets = nutrient_targets[person]
+    selected_person_nutrient_targets = copy.deepcopy(nutrient_targets[person])
   
   for measure in selected_person_nutrient_targets:
     try:
@@ -221,7 +221,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     except TypeError:
       pass
 
-  logger.debug('{} selected. nutritional targets: {}'.format(person, selected_person_nutrient_targets))
+  logger.info('{} selected. nutritional targets: {}'.format(person, selected_person_nutrient_targets))
   # Get a random starting meal plan
 
   combinations = 1
@@ -247,11 +247,13 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     if check_nutritional_diff(diff):
       h = hash(frozenset(meal.items()))
       price = 0
-      variety = 0
+      varieties = []
+      amounts = []
       for item, amount in meal.items():
         price += foods[item]['price/100g'] / 100 * amount
-        variety += foods[item]['Variety']
-      variety /= len(meal)
+        varieties.append(foods[item]['Variety'])
+        amounts.append(amount)
+      variety = np.average(varieties, weights=amounts)
       meal_plans[h] = {'meal': copy.copy(meal), 'price': price, 'variety': variety}
       target_measure = None
       logger.debug('Hit!')
