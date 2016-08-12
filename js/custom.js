@@ -2,6 +2,12 @@ $(document).ready(function() {
   function round(float) {
     return Math.round(float * 100) / 100;
   }
+  function validate(min, max) {
+    if (min > max) {
+      return "Min must be less than max";
+    }
+    return "";
+  }
   function createSlider(slider, name, machine_name, defaults) {
     var range = {'min': 0, 'max': defaults.max * 2}
     if (name == 'Energy kJ') {
@@ -37,9 +43,13 @@ $(document).ready(function() {
     });
     $('#' + machine_name + ' input.min').keyup(function() {
       slider.noUiSlider.set([$(this).val(), null]);
+      var v = validate($(this).val(), $('#' + machine_name + ' input.max').val());
+      this.setCustomValidity(v);
     });
     $('#' + machine_name + ' input.max').keyup(function() {
       slider.noUiSlider.set([null, $(this).val()]);
+      var v = validate($('#' + machine_name + ' input.min').val(), $(this).val());
+      this.setCustomValidity(v);
     });
   }
   $.get('get_nutrient_targets', function(data) {
@@ -52,7 +62,7 @@ $(document).ready(function() {
         selected = 'selected';
         $.each(fields, function(name, defaults) {
           var machine_name = name.replace(/[ %*]+/g, '_');
-          $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + name + '</p><div class="input-field col s2"><input value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
+          $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + name + '</p><div class="input-field col s2"><input name="' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
           var slider = $('#' + machine_name + ' div.slider')[0];
           createSlider(slider, name, machine_name, defaults)
         });
@@ -121,7 +131,20 @@ $(document).ready(function() {
   $('#nutritional_constraints').submit(function( e ) {
     e.preventDefault();
     var variables = {}
+    var nt = {}
     $(this).serializeArray().map(function(x){variables[x.name] = x.value;});
+    for (var k in variables) {
+      var v = variables[k];
+      var bits = k.split('_');
+      if (bits.length == 2) {
+        var measure = bits[0];
+        var minormax = bits[1];
+        if (!nt[measure]) nt[measure] = {}
+        nt[measure][minormax] = parseInt(v);
+        delete variables[k];
+      }
+    }
+    variables['nutrient_targets'] = nt;
     console.log(variables);
     get_meal_plans(variables);
   });
