@@ -4,6 +4,7 @@ $(document).ready(function() {
   }
   $.get('get_nutrient_targets', function(data) {
     console.log(data);
+    window.nutritional_targets = data;
     for (person in data) {
       var selected = '';
       var fields = data[person];
@@ -58,7 +59,23 @@ $(document).ready(function() {
     $('#person').material_select();
     Materialize.updateTextFields();
     $('#person').change(function (e) {
-      console.log($(this).val());
+      var p = $(this).val();
+      var new_defaults = window.nutritional_targets[p];
+      for (var name in new_defaults) {
+        var defaults = new_defaults[name];
+        var machine_name = name.replace(/[ %*]+/g, '_');
+        $("#dynamic_fields #" + machine_name + " input.min").val(round(defaults.min));
+        $("#dynamic_fields #" + machine_name + " input.max").val(round(defaults.max));
+        $("#dynamic_fields #" + machine_name + " input.min").trigger('keyup');
+        $("#dynamic_fields #" + machine_name + " input.max").trigger('keyup');
+        var range = {'min': 0, 'max': defaults.max * 2}
+        if (name == 'Energy kJ') {
+          range = {'min': defaults.min * .9, 'max': defaults.max * 1.1}
+        }
+        var slider = $("#dynamic_fields #" + machine_name + " div.slider")[0];
+        console.log(slider);
+        slider.noUiSlider.updateOptions({range: range});
+      }
     });
   });
   function get_meal_plans(variables) {
