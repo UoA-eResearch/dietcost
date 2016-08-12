@@ -8,3 +8,13 @@
   width: 50%;
   text-align: right;
 }
+
+.nt_label {
+  text-align: center;
+}
+
+.slider {
+  width: 90%;
+  text-align: center;
+  margin: auto;
+}

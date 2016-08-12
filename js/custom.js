@@ -1,19 +1,66 @@
 $(document).ready(function() {
+  function round(float) {
+    return Math.round(float * 100) / 100;
+  }
   $.get('get_nutrient_targets', function(data) {
     console.log(data);
     for (person in data) {
       var selected = '';
+      var fields = data[person];
       if (person == 'adult man') {
         selected = 'selected';
+        $.each(fields, function(name, defaults) {
+          var machine_name = name.replace(/[ %*]+/g, '_');
+          $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + name + '</p><div class="input-field col s2"><input value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
+          var slider = $('#' + machine_name + ' div.slider')[0];
+          var range = {'min': 0, 'max': defaults.max * 2}
+          if (name == 'Energy kJ') {
+            range = {'min': defaults.min * .9, 'max': defaults.max * 1.1}
+          }
+          noUiSlider.create(slider, {
+            start: [defaults.min, defaults.max],
+            connect: true,
+            step: 1,
+            behaviour: 'tap-drag',
+            pips: {
+              mode: 'count',
+              values: 6,
+              density: 4
+            },
+            range: range,
+            format: {
+              to: function(value) {
+                return parseInt(value);
+              },
+              from: function(value) {
+                return parseInt(value);
+              }
+            }
+          });
+          slider.noUiSlider.on('slide', function(values, handle) {
+            // min handle = 0, max handle = 1
+            if (handle) {
+              $('#' + machine_name + ' input.max').val(values[handle]);
+            } else {
+              $('#' + machine_name + ' input.min').val(values[handle]);
+            }
+          });
+          $('#' + machine_name + ' input.min').keyup(function() {
+            slider.noUiSlider.set([$(this).val(), null]);
+          });
+          $('#' + machine_name + ' input.max').keyup(function() {
+            slider.noUiSlider.set([null, $(this).val()]);
+          });
+        });
       }
       $('#person').append("<option " + selected + ">" + person + "</option>")
-      var fields = data[person];
     }
     $('#person').material_select();
+    Materialize.updateTextFields();
+    $('#person').change(function (e) {
+      console.log($(this).val());
+    });
   });
-  function round(float) {
-    return Math.round(float * 100) / 100;
-  }
   function get_meal_plans(variables) {
     $('#progress').show();
     $.ajax({
