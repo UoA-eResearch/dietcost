@@ -62,12 +62,24 @@ $(document).ready(function() {
         selected = 'selected';
         $.each(fields, function(name, defaults) {
           var machine_name = name.replace(/[ %*]+/g, '_');
-          $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + name + '</p><div class="input-field col s2"><input name="' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
+          var display_name = name.charAt(0).toUpperCase() + name.slice(1);;
+          if (name == 'CHO % energy') {
+            display_name = 'Carbohydrates % energy';
+          }
+          $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + display_name + '</p><div class="input-field col s2"><input name="' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
           var slider = $('#' + machine_name + ' div.slider')[0];
           createSlider(slider, name, machine_name, defaults)
         });
       }
-      $('#person').append("<option " + selected + ">" + person + "</option>")
+      var person_display = person;
+      if (person == '7 girl') {
+        person_display = '7-year-old girl';
+      } else if (person == 'adult women') {
+        person_display = 'adult woman';
+      } else if (person == '14 boy') {
+        person_display = '14-year-old boy';
+      }
+      $('#person').append("<option " + selected + " value='" + person + "'>" + person_display + "</option>")
     }
     $('#person').material_select();
     Materialize.updateTextFields();
@@ -140,7 +152,7 @@ $(document).ready(function() {
         var measure = bits[0];
         var minormax = bits[1];
         if (!nt[measure]) nt[measure] = {}
-        nt[measure][minormax] = parseInt(v);
+        nt[measure][minormax] = parseFloat(v);
         delete variables[k];
       }
     }
