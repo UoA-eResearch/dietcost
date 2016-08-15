@@ -19,12 +19,19 @@ def css(filename):
 def js(filename):
   return static_file(filename, './js')
 
+@get('/csvs/<filename>')
+def csvs(filename):
+  return static_file(filename, './csvs')
+
 @get('/get_meal_plans')
+def get_meal_plans_get():
+  return meal_planner.get_meal_plans()
+
 @post('/get_meal_plans')
-def get_meal_plan():
-  person = request.params.person or request.json.get('person') or 'adult man'
-  nutrient_targets = request.params.nutrient_targets or request.json.get('nutrient_targets')
-  iterations = request.params.iterations or request.json.get('iterations') or 10000
+def get_meal_plans_post():
+  person = request.json.get('person') or 'adult man'
+  nutrient_targets = request.json.get('nutrient_targets')
+  iterations = request.json.get('iterations') or 10000
   logger.info('request recieved, person={}, nutrient_targets={}, iterations={}'.format(person, nutrient_targets, iterations))
   return meal_planner.get_meal_plans(person, nutrient_targets, iterations)
 

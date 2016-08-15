@@ -117,8 +117,8 @@ $(document).ready(function() {
         $('#meal_plans').empty();
         var totalPrice = 0;
         var totalVariety = 0;
-        for (var hash in data) {
-          var o = data[hash];
+        for (var hash in data.meal_plans) {
+          var o = data.meal_plans[hash];
           var items = "";
           var keys = Object.keys(o.meal).sort();
           for (var i in keys) {
@@ -134,8 +134,8 @@ $(document).ready(function() {
           totalVariety += o.variety;
         }
         $('.collapsible').collapsible();
-        var l = Object.keys(data).length;
-        $('#summary').html("Total meal plans: " + l + ". Average price: $" + round(totalPrice / l) + ". Average variety: " + round(totalVariety / l));
+        var l = Object.keys(data.meal_plans).length;
+        $('#summary').html("Total meal plans: " + l + ". Average price: $" + round(totalPrice / l) + ". Average variety: " + round(totalVariety / l) + ". <a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv'><i class='material-icons left'>play_for_work</i>Download as csv</a>");
       }
     });
   }

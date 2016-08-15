@@ -18,3 +18,11 @@
   text-align: center;
   margin: auto;
 }
+
+#summary {
+  line-height: 36px;
+}
+
+.download-as-csv {
+  float: right;
+}

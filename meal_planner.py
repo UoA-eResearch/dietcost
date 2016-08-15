@@ -5,11 +5,19 @@ import random
 import pprint
 import numpy as np
 import time
+import datetime
 import copy
 import logging
+import os
+import csv
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('meal_planner')
+
+try:
+  os.mkdir('csvs')
+except OSError:
+  pass
 
 foods = {}
 food_ids = {}
@@ -300,7 +308,25 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   logger.info('iterations done, took {}s'.format(e-s))
   logger.debug('Matched meals: {}'.format(pprint.pformat(meal_plans)))
   logger.info('{} matched meals'.format(len(meal_plans)))
-  return meal_plans
+  s = time.time()
+  dt = str(datetime.datetime.now())
+  filename = 'csvs/{}.csv'.format(dt)
+  with open(filename, 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow(["Persona", "min/max"] + selected_person_nutrient_targets.keys())
+    writer.writerow([person, "min"] + [x['min'] for x in selected_person_nutrient_targets.values()])
+    writer.writerow([person, "max"] + [x['max'] for x in selected_person_nutrient_targets.values()])
+    writer.writerow([])
+    writer.writerow(["Timestamp", "Iteration limit"])
+    writer.writerow([dt, iteration_limit])
+    writer.writerow([])
+    writer.writerow(["Results"])
+    writer.writerow(["unique id", "price", "variety"] + meal.keys())
+    for h,m in meal_plans.items():
+      writer.writerow([h, m['price'], m['variety']] + m['meal'].values())
+  e = time.time()
+  logger.debug('write done, took {}s'.format(e-s))
+  return {'meal_plans': meal_plans, 'csv_file': filename}
 
 if __name__ == "__main__":
   logger.setLevel(logging.DEBUG)
