@@ -3,8 +3,22 @@ $(document).ready(function() {
     return Math.round(float * 100) / 100;
   }
   function validate(min, max) {
+    min = parseFloat(min);
+    max = parseFloat(max);
+    if (isNaN(min)) {
+      return "Min must be a number";
+    }
+    if (isNaN(max)) {
+      return "Max must be a number";
+    }
     if (min > max) {
       return "Min must be less than max";
+    }
+    if (min < 0) {
+      return "Min must be positive";
+    }
+    if (max < 0) {
+      return "Max must be positive";
     }
     return "";
   }
