@@ -26,3 +26,23 @@
 .download-as-csv {
   float: right;
 }
+
+#meal_plans>.col:nth-child(n)>.card {
+    background: #C0FF93;
+}
+
+#meal_plans>.col:nth-child(2n)>.card {
+    background: #E8CB86;
+}
+
+#meal_plans>.col:nth-child(3n)>.card {
+    background: #FFA8A0;
+}
+
+#meal_plans>.col:nth-child(4n)>.card {
+    background: #B386E8;
+}
+
+#meal_plans>.col:nth-child(5n)>.card {
+    background: #A0E8FF;
+}
