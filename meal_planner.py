@@ -19,6 +19,11 @@ try:
 except OSError:
   pass
 
+try: # check whether python knows about 'basestring'
+   basestring
+except NameError: # no, it doesn't (it's Python3); use 'str' instead
+   basestring=str
+
 foods = {}
 food_ids = {}
 nutrient_targets = {}
@@ -131,7 +136,7 @@ for name, data in foods.items():
 for row in nutrientsTargetsSheet:
   n = {}
   for measure, value in row.items():
-    if type(value) is unicode:
+    if isinstance(value, basestring):
       if '-' in value and '%' in value:
         bits = [float(x) for x in value.strip('% ').split('-')]
         n[measure] = {'min': bits[0], 'max': bits[1]}
@@ -292,7 +297,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         logger.debug("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * SERVE_SIZE))
     else:
-      food = random.choice(meal.keys())
+      food = random.choice(list(meal.keys()))
       t = foods[food]['constraints'][person]
       r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
     
@@ -313,7 +318,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   filename = 'csvs/{}.csv'.format(dt)
   with open(filename, 'w') as f:
     writer = csv.writer(f)
-    writer.writerow(["Persona", "min/max"] + selected_person_nutrient_targets.keys())
+    writer.writerow(["Persona", "min/max"] + list(selected_person_nutrient_targets.keys()))
     writer.writerow([person, "min"] + [x['min'] for x in selected_person_nutrient_targets.values()])
     writer.writerow([person, "max"] + [x['max'] for x in selected_person_nutrient_targets.values()])
     writer.writerow([])
@@ -321,9 +326,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     writer.writerow([dt, iteration_limit])
     writer.writerow([])
     writer.writerow(["Results"])
-    writer.writerow(["unique id", "price", "variety"] + meal.keys())
+    writer.writerow(["unique id", "price", "variety"] + list(meal.keys()))
     for h,m in meal_plans.items():
-      writer.writerow([h, m['price'], m['variety']] + m['meal'].values())
+      writer.writerow([h, m['price'], m['variety']] + list(m['meal'].values()))
   e = time.time()
   logger.debug('write done, took {}s'.format(e-s))
   return {'meal_plans': meal_plans, 'csv_file': filename}
