@@ -80,6 +80,9 @@ $(document).ready(function() {
           if (name == 'CHO % energy') {
             display_name = 'Carbohydrates % energy';
           }
+          if (name == 'Free sugars % energy*') {
+            display_name = 'Total sugars % energy';
+          }
           $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + display_name + '</p><div class="input-field col s2"><input name="' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
           var slider = $('#' + machine_name + ' div.slider')[0];
           createSlider(slider, name, machine_name, defaults)
