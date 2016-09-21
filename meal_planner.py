@@ -56,7 +56,6 @@ target_to_measure = {
   'fibre g': 'Fibre g/100g'
 }
 
-SERVE_SIZE = .5
 MAX_SCALE = 2
 
 def parse_sheet(sheet, header=0, limit=None):
@@ -212,7 +211,7 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5):
   s = time.time()
 
   meal = {}
@@ -242,7 +241,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   for food, details in foods.items():
     try:
       t = foods[food]['constraints'][person]
-      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
+      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * min_serve_size_difference))
       if len(r) > 0:
         meal[food] = random.choice(r)
         combinations *= len(r)
@@ -292,14 +291,14 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       nt = selected_person_nutrient_targets[target_measure]
       if diff[target_measure] > 0:
         logger.debug("We're too high on {} - {} > {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['max']))
-        r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * SERVE_SIZE))
+        r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * min_serve_size_difference))
       else:
         logger.debug("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
-        r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * SERVE_SIZE))
+        r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))
     else:
       food = random.choice(list(meal.keys()))
       t = foods[food]['constraints'][person]
-      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * SERVE_SIZE))
+      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * min_serve_size_difference))
     
     logger.debug('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
     if len(r) > 0:

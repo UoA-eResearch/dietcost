@@ -34,7 +34,20 @@
             <label>Persona</label>
           </div>
         </div>
-        <div id="dynamic_fields" class="row">
+        <div id="dynamic_fields" class="row"></div>
+        <div class="row">
+          <div class="input-field col s6 offset-s3">
+            <i class="material-icons prefix">repeat</i>
+            <input id="iterations" type="number" name="iterations" class="validate" value="10000">
+            <label for="iterations">Iterations (every 10000 iterations takes about 5 seconds)</label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-field col s6 offset-s3">
+            <i class="material-icons prefix">album</i>
+            <input id="min_serve_size_difference" type="number" step=".01" name="min_serve_size_difference" class="validate" value=".5">
+            <label for="min_serve_size_difference">Minimum serve size difference</label>
+          </div>
         </div>
         <button id="get_meal_plan" class="btn waves-effect waves-light" type="submit" name="action">Submit
           <i class="material-icons right">send</i>
