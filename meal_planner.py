@@ -211,7 +211,7 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False):
   s = time.time()
 
   meal = {}
@@ -240,11 +240,12 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   for food, details in foods.items():
     try:
-      t = foods[food]['constraints'][person]
-      r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * min_serve_size_difference))
-      if len(r) > 0:
-        meal[food] = random.choice(r)
-        combinations *= len(r)
+      if details['Variety'] in allowed_varieties:
+        t = details['constraints'][person]
+        r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
+        if len(r) > 0:
+          meal[food] = random.choice(r)
+          combinations *= len(r)
     except KeyError:
       pass
 
@@ -321,8 +322,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     writer.writerow([person, "min"] + [x['min'] for x in selected_person_nutrient_targets.values()])
     writer.writerow([person, "max"] + [x['max'] for x in selected_person_nutrient_targets.values()])
     writer.writerow([])
-    writer.writerow(["Timestamp", "Iteration limit"])
-    writer.writerow([dt, iteration_limit])
+    writer.writerow(["Timestamp", "Iteration limit", "Min serve size difference", "Allowed varieties", "Allow takeaways"])
+    writer.writerow([dt, iteration_limit, min_serve_size_difference, allowed_varieties, allow_takeaways])
     writer.writerow([])
     writer.writerow(["Results"])
     writer.writerow(["unique id", "price", "variety"] + list(meal.keys()))

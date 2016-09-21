@@ -33,8 +33,10 @@ def get_meal_plans_post():
   nutrient_targets = request.json.get('nutrient_targets')
   iterations = request.json.get('iterations') or 10000
   min_serve_size_difference = request.json.get('min_serve_size_difference') or .5
-  logger.info('request recieved, person={}, nutrient_targets={}, iterations={}, min_serve_size_difference={}'.format(person, nutrient_targets, iterations, min_serve_size_difference))
-  return meal_planner.get_meal_plans(person, nutrient_targets, int(iterations), float(min_serve_size_difference))
+  allowed_varieties = request.json.get('variety') or [1,2,3]
+  allow_takeaways = request.json.get('takeaways')
+  logger.info('request recieved, person={}, nutrient_targets={}, iterations={}, min_serve_size_difference={}, allowed_varieties={}'.format(person, nutrient_targets, iterations, min_serve_size_difference, allowed_varieties))
+  return meal_planner.get_meal_plans(person, nutrient_targets, int(iterations), float(min_serve_size_difference), allowed_varieties, bool(allow_takeaways))
 
 @get('/get_nutrient_targets')
 def get_nutrient_targets():

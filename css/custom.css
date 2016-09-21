@@ -17,6 +17,10 @@ input {
   text-align: center;
 }
 
+.input-field i {
+  color: #26a69a !important;
+}
+
 .slider {
   width: 90%;
   text-align: center;

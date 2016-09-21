@@ -98,7 +98,7 @@ $(document).ready(function() {
       }
       $('#person').append("<option " + selected + " value='" + person + "'>" + person_display + "</option>")
     }
-    $('#person').material_select();
+    $('select').material_select();
     Materialize.updateTextFields();
     $('#person').change(function (e) {
       var p = $(this).val();
@@ -152,7 +152,12 @@ $(document).ready(function() {
         }
         $('.collapsible').collapsible();
         var l = Object.keys(data.meal_plans).length;
-        $('#summary').html("Total meal plans: " + l + ". Average price: $" + round(totalPrice / l) + ". Average variety: " + round(totalVariety / l) + ". <a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv'><i class='material-icons left'>play_for_work</i>Download as csv</a>");
+        var summary = "Total meal plans: " + l + ". ";
+        if (l) {
+          summary += "Average price: $" + round(totalPrice / l) + ". Average variety: " + round(totalVariety / l) + ". ";
+        }
+        summary += "<a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv'><i class='material-icons left'>play_for_work</i>Download as csv</a>";
+        $('#summary').html(summary);
       }
     });
   }
@@ -161,7 +166,14 @@ $(document).ready(function() {
     e.preventDefault();
     var variables = {}
     var nt = {}
-    $(this).serializeArray().map(function(x){variables[x.name] = x.value;});
+    $(this).serializeArray().map(function(x){
+      if (x.name == 'variety') {
+        if (!variables['variety']) variables['variety'] = [];
+        variables['variety'].push(parseInt(x.value));
+      } else {
+        variables[x.name] = x.value;
+      }
+    });
     for (var k in variables) {
       var v = variables[k];
       var bits = k.split('_');
