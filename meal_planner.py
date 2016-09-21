@@ -40,7 +40,9 @@ targetmap = {
   'Fat': 'Fat % energy',
   'Energy kJ': 'Energy kJ',
   'Sugars': 'Free sugars % energy*',
-  'Fibre': 'fibre g'
+  'Fibre': 'fibre g',
+  'Alcohol % energy': 'Alcohol % energy',
+  'Discretionary foods % energy': 'Discretionary foods % energy'
 }
 
 reverse_targetmap = dict([(v,k) for k,v in targetmap.items()])
@@ -148,6 +150,8 @@ for row in nutrientsTargetsSheet:
       n[measure] = {'min': 0, 'max': value}
     elif measure == 'fibre g':
       n[measure] = {'min': value - (value*0.015), 'max': value + (value*0.5)}
+  n["Alcohol % energy"] = {'min': 0, 'max': 50}
+  n["Discretionary foods % energy"] = {'min': 0, 'max': 50}
   nutrient_targets[row['Healthy diet per day']] = n
 
 for row in foodPricesSheet:
@@ -163,7 +167,7 @@ logger.debug('load done, took {}s'.format(e-s))
 # Generate a plan
 
 def get_nutrients(meal):
-  nutrients_sum = {}
+  nutrients_sum = {'Discretionary foods % energy': 0, 'Alcohol % energy': 0}
 
   for food, amount in meal.items():
     for measure, value in foods[food]['nutrition'].items():
@@ -174,6 +178,10 @@ def get_nutrients(meal):
         nutrients_sum[measure] += value
       else:
         nutrients_sum[measure] = value
+    if foods[food]['Food group'] == 'Alcohol':
+      nutrients_sum['Alcohol % energy'] += foods[food]['nutrition']['Energy kJ']
+    if foods[food]['core/disc'] == 'd':
+      nutrients_sum['Discretionary foods % energy'] += foods[food]['nutrition']['Energy kJ']
 
   # Convert g to % E
   for k, v in nutrients_sum.items():
@@ -181,6 +189,10 @@ def get_nutrients(meal):
       nutrients_sum[k] = ((v * 37.7) / nutrients_sum['Energy kJ']) * 100
     if k == 'CHO' or k == 'protein' or k == 'Sugars':
       nutrients_sum[k] = ((v * 16.7) / nutrients_sum['Energy kJ']) * 100
+    if k == 'Alcohol % energy':
+      nutrients_sum[k] = (v / nutrients_sum['Energy kJ']) * 100
+    if k == 'Discretionary foods % energy':
+      nutrients_sum[k] = (v / nutrients_sum['Energy kJ']) * 100
 
   return nutrients_sum
 
@@ -276,7 +288,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         if value != 0:
           off_measures.append(measure)
       target_measure = random.choice(off_measures)
-      reverse_target_measure = target_to_measure[target_measure]
+      reverse_target_measure = target_to_measure.get(target_measure, 'Energy kJ/100g')
 
     if target_measure:
       foods_that_impact_this_measure = []
