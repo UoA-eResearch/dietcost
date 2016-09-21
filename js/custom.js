@@ -143,9 +143,18 @@ $(document).ready(function() {
             var amount = o.meal[k];
             items += "<tr><td>" + k + "</td><td>" + round(amount) + "g</td></tr>";
           }
+          var fgSum = "";
+          var keys = Object.keys(o.per_group).sort();
+          for (var i in keys) {
+            var k = keys[i];
+            var d = o.per_group[k];
+            fgSum += "<tr><td>" + k + "</td><td>" + round(d['amount']) + "g</td><td>$" + round(d['price']) + "</td><td>" + round(d['serves']) + "</td></tr>";
+          }
           var table = "<table class='highlight bordered'><thead><tr><th data-field='name'>Name</th><th data-field='amount'>Amount</th></tr></thead><tbody>" + items + "</tbody></table>";
           var collapsibleTable = "<ul class='collapsible' data-collapsible='accordion'><li><div class='collapsible-header'><i class='material-icons'>receipt</i>Items</div><div class='collapsible-body'>" + table + "</div></li></ul>";
-          var card = "<div class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'><p class='price'>Price: $" + round(o.price) + "</p><p class='variety'>Variety: " + round(o.variety) + "</p></div></div></div>";
+          var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
+          var summary = "<p class='price'>Price: $" + round(o.price) + "</p><p class='variety'>Variety: " + round(o.variety) + "</p>";
+          var card = "<div class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'>" + foodGroupTable + "<br>" + summary + "</div></div></div>";
           $('#meal_plans').append(card);
           totalPrice += o.price;
           totalVariety += o.variety;

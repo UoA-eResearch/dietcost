@@ -97,6 +97,10 @@ foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
 
 for row in foodsSheet:
   name = row['Commonly consumed food']
+  if row['Food group'] == 'Sauces, dressings, spreads, sugars':
+    row['Food group'] = 'Sauces'
+  elif row['Food group'] == 'Protein foods: Meat, poultry, seafood, eggs, legumes, nuts':
+    row['Food group'] = 'Protein'
   foods[name] = row
   food_ids[row['Commonly consumed food ID']] = name
 
@@ -271,15 +275,21 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     logger.debug('Iteration: {}'.format(i))
     if check_nutritional_diff(diff):
       h = hash(frozenset(meal.items()))
-      price = 0
+      total_price = 0
       varieties = []
       amounts = []
+      per_group = dict([(x,{'amount': 0, 'price': 0, 'serves': 0}) for x in food_groups])
       for item, amount in meal.items():
-        price += foods[item]['price/100g'] / 100 * amount
+        price = foods[item]['price/100g'] / 100 * amount
+        total_price += price
         varieties.append(foods[item]['Variety'])
         amounts.append(amount)
+        fg = foods[item]['Food group']
+        per_group[fg]['amount'] += amount
+        per_group[fg]['serves'] += amount / foods[item]['serve size']
+        per_group[fg]['price'] += price
       variety = np.average(varieties, weights=amounts)
-      meal_plans[h] = {'meal': copy.copy(meal), 'price': price, 'variety': variety}
+      meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variety': variety, 'per_group': per_group}
       target_measure = None
       logger.debug('Hit!')
     else:
@@ -338,9 +348,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     writer.writerow([dt, iteration_limit, min_serve_size_difference, allowed_varieties, allow_takeaways])
     writer.writerow([])
     writer.writerow(["Results"])
-    writer.writerow(["unique id", "price", "variety"] + list(meal.keys()))
+    writer.writerow(["unique id", "price", "variety"] + list(meal.keys()) + [x + ' ' + y for x in food_groups for y in ['amount', 'price', 'serves']])
     for h,m in meal_plans.items():
-      writer.writerow([h, m['price'], m['variety']] + list(m['meal'].values()))
+      writer.writerow([h, m['price'], m['variety']] + list(m['meal'].values()) + [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']])
   e = time.time()
   logger.debug('write done, took {}s'.format(e-s))
   return {'meal_plans': meal_plans, 'csv_file': filename}
