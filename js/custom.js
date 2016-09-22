@@ -165,7 +165,7 @@ $(document).ready(function() {
         if (l) {
           summary += "Average price: $" + round(totalPrice / l) + ". Average variety: " + round(totalVariety / l) + ". ";
         }
-        summary += "<a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv'><i class='material-icons left'>play_for_work</i>Download as csv</a>";
+        summary += "<a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv' download><i class='material-icons left'>play_for_work</i>Download as csv</a>";
         $('#summary').html(summary);
       }
     });

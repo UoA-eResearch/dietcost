@@ -21,7 +21,7 @@ def js(filename):
 
 @get('/csvs/<filename>')
 def csvs(filename):
-  return static_file(filename, './csvs')
+  return static_file(filename, './csvs', download=True)
 
 @get('/get_meal_plans')
 def get_meal_plans_get():
