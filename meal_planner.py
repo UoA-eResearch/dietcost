@@ -104,8 +104,11 @@ for row in foodsSheet:
   foods[name] = row
   food_ids[row['Commonly consumed food ID']] = name
 
+  if row['Food group'] not in food_groups:
+    food_groups[row['Food group']] = {}
+
 for row in foodConstraintsHSheet:
-  try:
+  if row['Food ID'] in food_ids:
     name = food_ids[row['Food ID']]
     # per week
     foods[name]['constraints'] = {
@@ -118,8 +121,17 @@ for row in foodConstraintsHSheet:
       foods[name]['serve size'] = int(row['serve size'])
     except ValueError:
       pass
-  except KeyError:
-    pass
+  partial = row['Food'].split()[0]
+  if partial == 'Meat,':
+    partial = 'Protein'
+  for fg in food_groups:
+    if partial in fg:
+      food_groups[fg]['constraints_serves'] = {
+        'adult man': {'min': row['Min'], 'max': row['Max']},
+        'adult women': {'min': row[''], 'max': row['_1']},
+        '14 boy': {'min': row['Min_1'], 'max': row['Max_1']},
+        '7 girl': {'min': row['Min_2'], 'max': row['max']}
+      }
 
 for row in nutrientsSheet:
   if row['Commonly consumed food ID'] in food_ids:
@@ -132,11 +144,6 @@ for row in nutrientsSheet:
         pass
     name = food_ids[row['Commonly consumed food ID']]
     foods[name]['nutrition'] = floats
-
-for name, data in foods.items():
-  if data['Food group'] not in food_groups:
-    food_groups[data['Food group']] = []
-  food_groups[data['Food group']].append(name)
 
 for row in nutrientsTargetsSheet:
   n = {}
@@ -227,7 +234,7 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False, selected_person_food_group_serve_targets=None):
   s = time.time()
 
   meal = {}
@@ -236,6 +243,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   if not selected_person_nutrient_targets:
     # per day
     selected_person_nutrient_targets = copy.deepcopy(nutrient_targets[person])
+
+  if not selected_person_food_group_serve_targets:
+    selected_person_food_group_serve_targets = dict([(fg,food_groups[fg]['constraints_serves'][person]) for fg in food_groups if 'constraints_serves' in food_groups[fg]])
   
   for measure in selected_person_nutrient_targets:
     try:
@@ -273,6 +283,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     diff = get_diff(nutrients, selected_person_nutrient_targets)
     diff['Free sugars % energy*'] = 0 # Disable sugar check
     logger.debug('Iteration: {}'.format(i))
+    target_measure = None
+    target_fg = None
+
     if check_nutritional_diff(diff):
       h = hash(frozenset(meal.items()))
       total_price = 0
@@ -288,10 +301,19 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         per_group[fg]['amount'] += amount
         per_group[fg]['serves'] += amount / foods[item]['serve size']
         per_group[fg]['price'] += price
-      variety = np.average(varieties, weights=amounts)
-      meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variety': variety, 'per_group': per_group}
-      target_measure = None
-      logger.debug('Hit!')
+      off_food_groups = []
+      for fg in per_group:
+        if fg in selected_person_food_group_serve_targets:
+          c = selected_person_food_group_serve_targets[fg]
+          v = per_group[fg]['serves']
+          if v < c['min'] or v > c['max']:
+            off_food_groups.append(fg)
+      if off_food_groups:
+        target_fg = random.choice(off_food_groups)
+      else:
+        variety = np.average(varieties, weights=amounts)
+        meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variety': variety, 'per_group': per_group}
+        logger.debug('Hit!')
     else:
       off_measures = []
       for measure, value in diff.items():
@@ -318,12 +340,29 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       else:
         logger.debug("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))
+      logger.debug('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
+    elif target_fg:
+      c = selected_person_food_group_serve_targets[target_fg]
+      v = per_group[target_fg]['serves']
+      foods_that_impact_this_measure = []
+      for item in meal:
+        if foods[item]['Food group'] == target_fg:
+          foods_that_impact_this_measure.append(item)
+      food = random.choice(foods_that_impact_this_measure)
+      t = foods[food]['constraints'][person]
+      if v > c['max']:
+        logger.debug("Food group {} has too many serves - {} > {}".format(target_fg,v,c['max']))
+        r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * min_serve_size_difference))
+      elif v < c['min']:
+        logger.debug("Food group {} has too few serves - {} < {}".format(target_fg,v,c['min']))
+        r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))
+      logger.debug('{} has {} serves and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['serve size'], t['min'], t['max'], r, meal[food]))
     else:
+      # Randomly move off a hit
       food = random.choice(list(meal.keys()))
       t = foods[food]['constraints'][person]
       r = list(np.arange(t['min'], t['max'], foods[food]['serve size'] * min_serve_size_difference))
     
-    logger.debug('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
     if len(r) > 0:
       new_val = random.choice(r)
       logger.debug("Changing {} from {}g to {}g".format(food, meal[food], new_val))

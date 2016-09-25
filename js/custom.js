@@ -120,6 +120,10 @@ $(document).ready(function() {
       }
     });
   });
+  $.get('get_food_group_targets', function(data) {
+    console.log(data);
+    window.foodGroupTargets = data;
+  });
   function get_meal_plans(variables) {
     $('#progress').show();
     $.ajax({
