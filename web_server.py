@@ -45,8 +45,8 @@ def get_nutrient_targets():
   return meal_planner.nutrient_targets
 
 @get('/get_food_group_targets')
-def get_foods():
-  return food_groups
+def get_food_group_targets():
+  return meal_planner.food_groups
 
 port = int(os.environ.get('PORT', 8080))
 run(host='0.0.0.0', port=port, debug=True)
