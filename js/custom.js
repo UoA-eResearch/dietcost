@@ -69,7 +69,9 @@ $(document).ready(function() {
   $.get('get_nutrient_targets', function(data) {
     console.log(data);
     window.nutritional_targets = data;
-    for (person in data) {
+    var keys = Object.keys(data).sort();
+    for (var i in keys) {
+      var person = keys[i];
       var selected = '';
       var fields = data[person];
       if (person == 'adult man') {
@@ -88,14 +90,7 @@ $(document).ready(function() {
           createSlider(slider, name, machine_name, defaults)
         });
       }
-      var person_display = person;
-      if (person == '7 girl') {
-        person_display = '7-year-old girl';
-      } else if (person == 'adult women') {
-        person_display = 'adult woman';
-      } else if (person == '14 boy') {
-        person_display = '14-year-old boy';
-      }
+      var person_display = person.replace('7 girl', '7-year-old girl').replace('adult women', 'adult woman').replace('14 boy', '14-year-old boy');
       $('#person').append("<option " + selected + " value='" + person + "'>" + person_display + "</option>")
     }
     $('select').material_select();

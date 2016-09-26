@@ -36,7 +36,7 @@ def get_meal_plans_post():
   min_serve_size_difference = request.json.get('min_serve_size_difference') or .5
   allowed_varieties = request.json.get('variety') or [1,2,3]
   allow_takeaways = request.json.get('takeaways')
-  food_group_targets = request.json.get('food_group_targets') 
+  food_group_targets = request.json.get('food_group_targets') or {}
   logger.info('request recieved, person={}, nutrient_targets={}, iterations={}, min_serve_size_difference={}, allowed_varieties={}, food_group_targets={}'.format(person, nutrient_targets, iterations, min_serve_size_difference, allowed_varieties, food_group_targets))
   return meal_planner.get_meal_plans(person, nutrient_targets, int(iterations), float(min_serve_size_difference), allowed_varieties, bool(allow_takeaways), food_group_targets)
 

@@ -39,7 +39,7 @@ targetmap = {
   'Sat fat': 'Saturated fat % energy',
   'Fat': 'Fat % energy',
   'Energy kJ': 'Energy kJ',
-  'Sugars': 'Free sugars % energy*',
+  'Sugars': 'Total sugars % energy',
   'Fibre': 'fibre g',
   'Alcohol % energy': 'Alcohol % energy',
   'Discretionary foods % energy': 'Discretionary foods % energy'
@@ -54,7 +54,7 @@ target_to_measure = {
   'Saturated fat % energy': 'Sat fat g/100g',
   'Fat % energy': 'Fat g/100g',
   'Energy kJ': 'Energy kJ/100g',
-  'Free sugars % energy*': 'Sugars g/100g',
+  'Total sugars % energy': 'Sugars g/100g',
   'fibre g': 'Fibre g/100g'
 }
 
@@ -63,8 +63,8 @@ MAX_SCALE = 2
 def parse_sheet(sheet, header=0, limit=None):
   headers = []
   for c in range(sheet.ncols):
-    key = sheet.cell(header, c).value.strip()
-    headers.append(str(key))
+    key = str(sheet.cell(header, c).value).strip()
+    headers.append(key)
   rows = []
   if not limit:
     limit = sheet.nrows
@@ -91,8 +91,9 @@ sheet_names = xl_workbook.sheet_names()
 foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
 nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
 nutrientsTargetsSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=0, limit=4)
+nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=37, limit=8)
 foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Food constraints H'), header=2)
-#foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C'), header=2)
+foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C'), header=1)
 foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
 
 for row in foodsSheet:
@@ -136,6 +137,32 @@ for row in foodConstraintsHSheet:
           '7 girl': {'min': row['Min_2'], 'max': row['max']}
         }
 
+for row in foodConstraintsCSheet:
+  if row['1.0'] in food_ids:
+    name = food_ids[row['1.0']]
+    # per week
+    foods[name]['constraints'] = {
+      '14 boy C': {'min': row['Min_2'], 'max': row['Max_2'] * MAX_SCALE},
+      '7 girl C': {'min': row['Min_3'], 'max': row['Max_3'] * MAX_SCALE},
+      'adult man C': {'min': row['Min'], 'max': row['Max'] * MAX_SCALE},
+      'adult women C': {'min': row['Min_1'], 'max': row['Max_1'] * MAX_SCALE}
+    }
+  else:
+    continue # All current diet food group constraints are in g for now
+    partial = row[''].split()[0]
+    if partial == 'Meat,':
+      partial = 'Protein'
+    if partial == 'Fats':
+      continue
+    for fg in food_groups:
+      if partial in fg:
+        food_groups[fg]['constraints_serves'] = {
+          'adult man C': {'min': row['Min'], 'max': row['Max']},
+          'adult women C': {'min': row[''], 'max': row['_1']},
+          '14 boy C': {'min': row['Min_1'], 'max': row['Max_1']},
+          '7 girl C': {'min': row['Min_2'], 'max': row['max']}
+        }
+
 for row in nutrientsSheet:
   if row['Commonly consumed food ID'] in food_ids:
     floats = {}
@@ -166,7 +193,32 @@ for row in nutrientsTargetsSheet:
       n[measure] = {'min': value - (value*0.015), 'max': value + (value*0.5)}
   n["Alcohol % energy"] = {'min': 0, 'max': 50}
   n["Discretionary foods % energy"] = {'min': 0, 'max': 50}
+  n["Total sugars % energy"] = {'min': 0, 'max': 100}
   nutrient_targets[row['Healthy diet per day']] = n
+
+for row in nutrientsTargetsCSheet:
+  p = row['Nutrient constraints                      Current diet per day']
+  p_strip = p.replace('aduilt', 'adult').replace(' min', '').replace(' max', '').replace('woman', 'women') + ' C'
+  if 'min' in p:
+    minormax = 'min'
+  elif 'max' in p:
+    minormax = 'max'
+  n = nutrient_targets.get(p_strip, {})
+  for measure, value in row.items():
+    try:
+      f = float(value)
+      if measure == 'Energy MJ CI (calculated from BMI)':
+        measure = 'Energy kJ'
+        f *= 1000
+      measure = measure.replace('% E CI', '% energy').replace('%E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('saturated Fat', 'Saturated fat').replace('alcohol', 'Alcohol').replace('Sodium', 'sodium')
+      if measure not in n:
+        n[measure] = {}
+      n[measure][minormax] = f
+    except ValueError:
+      pass
+  n["Alcohol % energy"] = {'min': 0, 'max': 50}
+  n["Discretionary foods % energy"] = {'min': 0, 'max': 50}
+  nutrient_targets[p_strip] = n
 
 for row in foodPricesSheet:
   try:
@@ -237,7 +289,7 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False, selected_person_food_group_serve_targets=None):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False, selected_person_food_group_serve_targets={}):
   s = time.time()
 
   meal = {}
@@ -248,7 +300,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     selected_person_nutrient_targets = copy.deepcopy(nutrient_targets[person])
 
   if not selected_person_food_group_serve_targets:
-    selected_person_food_group_serve_targets = dict([(fg,food_groups[fg]['constraints_serves'][person]) for fg in food_groups if 'constraints_serves' in food_groups[fg]])
+    selected_person_food_group_serve_targets = dict([(fg,food_groups[fg]['constraints_serves'][person]) for fg in food_groups if 'constraints_serves' in food_groups[fg] and person in food_groups[fg]['constraints_serves']])
   
   for measure in selected_person_nutrient_targets:
     try:
@@ -284,7 +336,6 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   for i in range(iteration_limit):
     nutrients = get_nutrients(meal)
     diff = get_diff(nutrients, selected_person_nutrient_targets)
-    diff['Free sugars % energy*'] = 0 # Disable sugar check
     logger.debug('Iteration: {}'.format(i))
     target_measure = None
     target_fg = None
