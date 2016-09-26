@@ -221,7 +221,6 @@ for row in nutrientsTargetsCSheet:
       n[measure][minormax] = f
     except ValueError:
       pass
-  n["Alcohol % energy"] = {'min': 0, 'max': 50}
   n["Discretionary foods % energy"] = {'min': 0, 'max': 50}
   nutrient_targets[p_strip] = n
 
