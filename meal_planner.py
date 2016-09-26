@@ -379,9 +379,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   filename = 'csvs/{}.csv'.format(dt)
   with open(filename, 'w') as f:
     writer = csv.writer(f)
-    writer.writerow(["Persona", "min/max"] + list(selected_person_nutrient_targets.keys()))
-    writer.writerow([person, "min"] + [x['min'] for x in selected_person_nutrient_targets.values()])
-    writer.writerow([person, "max"] + [x['max'] for x in selected_person_nutrient_targets.values()])
+    writer.writerow(["Persona", "min/max"] + list(selected_person_nutrient_targets.keys()) + list(selected_person_food_group_serve_targets.keys()))
+    writer.writerow([person, "min"] + [x['min'] for x in selected_person_nutrient_targets.values()] + [x['min'] for x in selected_person_food_group_serve_targets.values()])
+    writer.writerow([person, "max"] + [x['max'] for x in selected_person_nutrient_targets.values()] + [x['max'] for x in selected_person_food_group_serve_targets.values()])
     writer.writerow([])
     writer.writerow(["Timestamp", "Iteration limit", "Min serve size difference", "Allowed varieties", "Allow takeaways"])
     writer.writerow([dt, iteration_limit, min_serve_size_difference, allowed_varieties, allow_takeaways])
