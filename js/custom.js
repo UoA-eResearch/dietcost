@@ -24,6 +24,9 @@ $(document).ready(function() {
   }
   function createSlider(slider, name, machine_name, defaults) {
     var range = {'min': 0, 'max': defaults.max * 2} // range to choose from
+    if (name.indexOf('%') !== -1) {
+      range = {'min': 0, 'max': 100}
+    }
     if (name == 'Energy kJ') {
       range = {'min': defaults.min * .9, 'max': defaults.max * 1.1}
     }
