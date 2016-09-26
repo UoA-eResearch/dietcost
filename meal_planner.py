@@ -326,6 +326,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   for food, details in foods.items():
     try:
       if details['Variety'] in allowed_varieties:
+        if details['Food group'] == 'Takeaway' and not allow_takeaways:
+          continue
         t = details['constraints'][person]
         r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
         if len(r) > 0:
