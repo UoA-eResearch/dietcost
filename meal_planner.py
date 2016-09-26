@@ -121,17 +121,20 @@ for row in foodConstraintsHSheet:
       foods[name]['serve size'] = int(row['serve size'])
     except ValueError:
       pass
-  partial = row['Food'].split()[0]
-  if partial == 'Meat,':
-    partial = 'Protein'
-  for fg in food_groups:
-    if partial in fg:
-      food_groups[fg]['constraints_serves'] = {
-        'adult man': {'min': row['Min'], 'max': row['Max']},
-        'adult women': {'min': row[''], 'max': row['_1']},
-        '14 boy': {'min': row['Min_1'], 'max': row['Max_1']},
-        '7 girl': {'min': row['Min_2'], 'max': row['max']}
-      }
+  else:
+    partial = row['Food'].split()[0]
+    if partial == 'Meat,':
+      partial = 'Protein'
+    if partial == 'Fats':
+      continue
+    for fg in food_groups:
+      if partial in fg:
+        food_groups[fg]['constraints_serves'] = {
+          'adult man': {'min': row['Min'], 'max': row['Max']},
+          'adult women': {'min': row[''], 'max': row['_1']},
+          '14 boy': {'min': row['Min_1'], 'max': row['Max_1']},
+          '7 girl': {'min': row['Min_2'], 'max': row['max']}
+        }
 
 for row in nutrientsSheet:
   if row['Commonly consumed food ID'] in food_ids:
@@ -396,4 +399,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
 if __name__ == "__main__":
   logger.setLevel(logging.DEBUG)
-  meal_plans = get_meal_plans()
+  meal_plans = get_meal_plans("adult women")
