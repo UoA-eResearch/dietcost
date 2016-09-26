@@ -198,6 +198,7 @@ for row in nutrientsTargetsSheet:
   n["Alcohol % energy"] = {'min': 0, 'max': 50}
   n["Discretionary foods % energy"] = {'min': 0, 'max': 50}
   n["Total sugars % energy"] = {'min': 0, 'max': 100}
+  n.pop("Free sugars % energy*")
   nutrient_targets[row['Healthy diet per day']] = n
 
 for row in nutrientsTargetsCSheet:
