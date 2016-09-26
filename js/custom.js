@@ -23,7 +23,7 @@ $(document).ready(function() {
     return "";
   }
   function createSlider(slider, name, machine_name, defaults) {
-    var range = {'min': 0, 'max': defaults.max * 2}
+    var range = {'min': 0, 'max': defaults.max * 2} // range to choose from
     if (name == 'Energy kJ') {
       range = {'min': defaults.min * .9, 'max': defaults.max * 1.1}
     }
@@ -76,14 +76,14 @@ $(document).ready(function() {
         selected = 'selected';
         $.each(fields, function(name, defaults) {
           var machine_name = name.replace(/[ %*]+/g, '_');
-          var display_name = name.charAt(0).toUpperCase() + name.slice(1);;
+          var display_name = name.charAt(0).toUpperCase() + name.slice(1);
           if (name == 'CHO % energy') {
             display_name = 'Carbohydrates % energy';
           }
           if (name == 'Free sugars % energy*') {
             display_name = 'Total sugars % energy';
           }
-          $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + display_name + '</p><div class="input-field col s2"><input name="' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
+          $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + display_name + '</p><div class="input-field col s2"><input name="nt_' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="nt_' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
           var slider = $('#' + machine_name + ' div.slider')[0];
           createSlider(slider, name, machine_name, defaults)
         });
@@ -110,10 +110,18 @@ $(document).ready(function() {
         $("#dynamic_fields #" + machine_name + " input.max").val(round(defaults.max));
         $("#dynamic_fields #" + machine_name + " input.min").trigger('keyup');
         $("#dynamic_fields #" + machine_name + " input.max").trigger('keyup');
-        var range = {'min': 0, 'max': defaults.max * 2}
-        if (name == 'Energy kJ') {
-          range = {'min': defaults.min * .9, 'max': defaults.max * 1.1}
-        }
+        var slider = $("#dynamic_fields #" + machine_name + " div.slider")[0];
+        slider.noUiSlider.destroy();
+        createSlider(slider, name, machine_name, defaults)
+      }
+      for (var name in window.foodGroupTargets) {
+        if (!window.foodGroupTargets[name]['constraints_serves']) continue;
+        var machine_name = name.replace(/[ %*&]+/g, '_');
+        var defaults = window.foodGroupTargets[name]['constraints_serves'][p];
+        $("#dynamic_fields #" + machine_name + " input.min").val(round(defaults.min));
+        $("#dynamic_fields #" + machine_name + " input.max").val(round(defaults.max));
+        $("#dynamic_fields #" + machine_name + " input.min").trigger('keyup');
+        $("#dynamic_fields #" + machine_name + " input.max").trigger('keyup');
         var slider = $("#dynamic_fields #" + machine_name + " div.slider")[0];
         slider.noUiSlider.destroy();
         createSlider(slider, name, machine_name, defaults)
@@ -123,6 +131,16 @@ $(document).ready(function() {
   $.get('get_food_group_targets', function(data) {
     console.log(data);
     window.foodGroupTargets = data;
+    $.each(data, function(name, constraints) {
+      if (!constraints['constraints_serves']) return;
+      var machine_name = name.replace(/[ %*&]+/g, '_');
+      var display_name = name.charAt(0).toUpperCase() + name.slice(1) + ' serves';
+      var defaults = constraints['constraints_serves']['adult man'];
+      $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + display_name + '</p><div class="input-field col s2"><input name="fg_' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="fg_' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
+      var slider = $('#' + machine_name + ' div.slider')[0];
+      createSlider(slider, name, machine_name, defaults)
+    });
+    Materialize.updateTextFields();
   });
   function get_meal_plans(variables) {
     $('#progress').show();
@@ -177,28 +195,27 @@ $(document).ready(function() {
   get_meal_plans({person: 'adult man'});
   $('#nutritional_constraints').submit(function( e ) {
     e.preventDefault();
-    var variables = {}
-    var nt = {}
+    var variables = {'nutrient_targets': {}, 'food_group_targets': {}}
     $(this).serializeArray().map(function(x){
       if (x.name == 'variety') {
         if (!variables['variety']) variables['variety'] = [];
         variables['variety'].push(parseInt(x.value));
+      } else if (x.name.startsWith('nt_')) {
+        var bits = x.name.split('_')
+        var measure = bits[1];
+        var minormax = bits[2];
+        if (!variables['nutrient_targets'][measure]) variables['nutrient_targets'][measure] = {}
+        variables['nutrient_targets'][measure][minormax] = parseFloat(x.value);
+      } else if (x.name.startsWith('fg_')) {
+        var bits = x.name.split('_');
+        var measure = bits[1];
+        var minormax = bits[2];
+        if (!variables['food_group_targets'][measure]) variables['food_group_targets'][measure] = {}
+        variables['food_group_targets'][measure][minormax] = parseFloat(x.value);
       } else {
         variables[x.name] = x.value;
       }
     });
-    for (var k in variables) {
-      var v = variables[k];
-      var bits = k.split('_');
-      if (bits.length == 2) {
-        var measure = bits[0];
-        var minormax = bits[1];
-        if (!nt[measure]) nt[measure] = {}
-        nt[measure][minormax] = parseFloat(v);
-        delete variables[k];
-      }
-    }
-    variables['nutrient_targets'] = nt;
     console.log(variables);
     get_meal_plans(variables);
   });
