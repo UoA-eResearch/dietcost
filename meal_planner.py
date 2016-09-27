@@ -218,6 +218,10 @@ for row in nutrientsTargetsCSheet:
       measure = measure.replace('% E CI', '% energy').replace('%E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('saturated Fat', 'Saturated fat').replace('alcohol', 'Alcohol').replace('Sodium', 'sodium')
       if measure not in n:
         n[measure] = {}
+      if minormax == 'min':
+        f *= .6
+      else:
+        f *= 1.4
       n[measure][minormax] = f
     except ValueError:
       pass
@@ -333,8 +337,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         if len(r) > 0:
           meal[food] = random.choice(r)
           combinations *= len(r)
-    except KeyError:
-      pass
+    except KeyError as e:
+      logger.debug('not including {} due to missing {}'.format(food, e))
 
   logger.debug('{} items in menu. {} distinct possible menus'.format(len(meal), combinations))
   # Iteratively improve
