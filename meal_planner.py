@@ -131,10 +131,10 @@ for row in foodConstraintsHSheet:
     for fg in food_groups:
       if partial in fg:
         food_groups[fg]['constraints_serves'] = {
-          'adult man': {'min': row['Min'], 'max': row['Max']},
-          'adult women': {'min': row[''], 'max': row['_1']},
-          '14 boy': {'min': row['Min_1'], 'max': row['Max_1']},
-          '7 girl': {'min': row['Min_2'], 'max': row['max']}
+          'adult man': {'min': row['Min'] / 7.0, 'max': row['Max'] / 7.0},
+          'adult women': {'min': row[''] / 7.0, 'max': row['_1'] / 7.0},
+          '14 boy': {'min': row['Min_1'] / 7.0, 'max': row['Max_1'] / 7.0},
+          '7 girl': {'min': row['Min_2'] / 7.0, 'max': row['max'] / 7.0}
         }
 
 for row in foodConstraintsCSheet:
@@ -161,10 +161,10 @@ for row in foodConstraintsCSheet:
     for fg in food_groups:
       if partial in fg:
         food_groups[fg]['constraints_serves'] = {
-          'adult man C': {'min': row['Min'], 'max': row['Max']},
-          'adult women C': {'min': row[''], 'max': row['_1']},
-          '14 boy C': {'min': row['Min_1'], 'max': row['Max_1']},
-          '7 girl C': {'min': row['Min_2'], 'max': row['max']}
+          'adult man': {'min': row['Min'] / 7.0, 'max': row['Max'] / 7.0},
+          'adult women': {'min': row[''] / 7.0, 'max': row['_1'] / 7.0},
+          '14 boy': {'min': row['Min_1'] / 7.0, 'max': row['Max_1'] / 7.0},
+          '7 girl': {'min': row['Min_2'] / 7.0, 'max': row['max'] / 7.0}
         }
 
 for row in nutrientsSheet:
@@ -309,7 +309,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   if not selected_person_food_group_serve_targets:
     selected_person_food_group_serve_targets = dict([(fg,food_groups[fg]['constraints_serves'][person]) for fg in food_groups if 'constraints_serves' in food_groups[fg] and person in food_groups[fg]['constraints_serves']])
-  
+
   for measure in selected_person_nutrient_targets:
     try:
       # convert to weekly
@@ -321,6 +321,10 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           pass
     except TypeError:
       pass
+
+  for fg in selected_person_food_group_serve_targets:
+    selected_person_food_group_serve_targets[fg]['max'] *= 7
+    selected_person_food_group_serve_targets[fg]['min'] *= 7
 
   logger.info('{} selected. nutritional targets: {}'.format(person, selected_person_nutrient_targets))
   # Get a random starting meal plan
@@ -460,4 +464,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
 if __name__ == "__main__":
   logger.setLevel(logging.DEBUG)
-  meal_plans = get_meal_plans("adult man C")
+  meal_plans = get_meal_plans("adult man")
