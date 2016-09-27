@@ -156,7 +156,6 @@ for row in foodConstraintsCSheet:
     except ValueError:
       pass
   else:
-    continue # All current diet food group constraints are in g for now
     partial = row[''].split()[0]
     if partial == 'Meat,':
       partial = 'Protein'
@@ -164,12 +163,17 @@ for row in foodConstraintsCSheet:
       continue
     for fg in food_groups:
       if partial in fg:
-        food_groups[fg]['constraints_serves'] = {
-          'adult man': {'min': row['Min'] / 7.0, 'max': row['Max'] / 7.0},
-          'adult women': {'min': row[''] / 7.0, 'max': row['_1'] / 7.0},
-          '14 boy': {'min': row['Min_1'] / 7.0, 'max': row['Max_1'] / 7.0},
-          '7 girl': {'min': row['Min_2'] / 7.0, 'max': row['max'] / 7.0}
+        c = {
+          'adult man C': {'min': 0, 'max': 100},
+          'adult women C': {'min': 0, 'max': 100},
+          '14 boy C': {'min': 0, 'max': 100},
+          '7 girl C': {'min': 0, 'max': 100}
         }
+        if 'constraints_serves' not in food_groups[fg]:
+          continue
+          food_groups[fg]['constraints_serves'] = c
+        else:
+          food_groups[fg]['constraints_serves'].update(c)
 
 for row in nutrientsSheet:
   if row['Commonly consumed food ID'] in food_ids:
@@ -314,7 +318,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     selected_person_nutrient_targets = copy.deepcopy(nutrient_targets[person])
 
   if not selected_person_food_group_serve_targets:
-    selected_person_food_group_serve_targets = dict([(fg,food_groups[fg]['constraints_serves'][person]) for fg in food_groups if 'constraints_serves' in food_groups[fg] and person in food_groups[fg]['constraints_serves']])
+    selected_person_food_group_serve_targets = dict([(fg,copy.deepcopy(food_groups[fg]['constraints_serves'][person])) for fg in food_groups if 'constraints_serves' in food_groups[fg] and person in food_groups[fg]['constraints_serves']])
 
   for measure in selected_person_nutrient_targets:
     try:
