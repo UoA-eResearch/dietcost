@@ -103,6 +103,10 @@ $(document).ready(function() {
       var new_defaults = window.nutritional_targets[p];
       for (var name in new_defaults) {
         var defaults = new_defaults[name];
+        if (!defaults) {
+          console.error("No " + name + " nutritional constraint defined for " + p + "!");
+          continue;
+        }
         var machine_name = name.replace(/[ %*]+/g, '_');
         $("#dynamic_fields #" + machine_name + " input.min").val(round(defaults.min));
         $("#dynamic_fields #" + machine_name + " input.max").val(round(defaults.max));
@@ -116,6 +120,10 @@ $(document).ready(function() {
         if (!window.foodGroupTargets[name]['constraints_serves']) continue;
         var machine_name = name.replace(/[ %*&]+/g, '_');
         var defaults = window.foodGroupTargets[name]['constraints_serves'][p];
+        if (!defaults) {
+          console.error("No " + name + " food group serves constraint defined for " + p + "!");
+          continue;
+        }
         $("#dynamic_fields #" + machine_name + " input.min").val(round(defaults.min));
         $("#dynamic_fields #" + machine_name + " input.max").val(round(defaults.max));
         $("#dynamic_fields #" + machine_name + " input.min").trigger('keyup');

@@ -151,6 +151,10 @@ for row in foodConstraintsCSheet:
       foods[name]['constraints'] = c
     else:
       foods[name]['constraints'].update(c)
+    try:
+      foods[name]['serve size'] = int(row['_4'])
+    except ValueError:
+      pass
   else:
     continue # All current diet food group constraints are in g for now
     partial = row[''].split()[0]
@@ -210,6 +214,8 @@ for row in nutrientsTargetsCSheet:
     minormax = 'max'
   n = nutrient_targets.get(p_strip, {})
   for measure, value in row.items():
+    if measure == 'Total sugars grams' or measure == 'Energy reported from survey':
+      continue
     try:
       f = float(value)
       if measure == 'Energy MJ CI (calculated from BMI)':
@@ -253,9 +259,9 @@ def get_nutrients(meal):
       else:
         nutrients_sum[measure] = value
     if foods[food]['Food group'] == 'Alcohol':
-      nutrients_sum['Alcohol % energy'] += foods[food]['nutrition']['Energy kJ']
+      nutrients_sum['Alcohol % energy'] += (foods[food]['nutrition']['Energy kJ/100g'] / 100) * amount
     if foods[food]['core/disc'] == 'd':
-      nutrients_sum['Discretionary foods % energy'] += foods[food]['nutrition']['Energy kJ']
+      nutrients_sum['Discretionary foods % energy'] += (foods[food]['nutrition']['Energy kJ/100g'] / 100) * amount
 
   # Convert g to % E
   for k, v in nutrients_sum.items():
@@ -394,7 +400,13 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       foods_that_impact_this_measure = []
       for item in meal:
         try:
-          if foods[item]['nutrition'][reverse_target_measure] != 0:
+          if target_measure == 'Alcohol % energy':
+            if foods[item]['Food group'] == 'Alcohol':
+              foods_that_impact_this_measure.append(item)
+          elif target_measure == 'Discretionary foods % energy':
+            if foods[item]['core/disc'] == 'd':
+              foods_that_impact_this_measure.append(item)
+          elif foods[item]['nutrition'][reverse_target_measure] != 0:
             foods_that_impact_this_measure.append(item)
         except KeyError as e:
           # Nutrional info for this food/target not known
@@ -408,7 +420,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       else:
         logger.debug("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))
-      logger.debug('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
+      logger.debug('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[food]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
     elif target_fg:
       c = selected_person_food_group_serve_targets[target_fg]
       v = per_group[target_fg]['serves']
