@@ -225,9 +225,9 @@ for row in nutrientsTargetsCSheet:
       if measure not in n:
         n[measure] = {}
       if minormax == 'min':
-        f *= .6
+        f *= .9
       else:
-        f *= 1.4
+        f *= 1.1
       n[measure][minormax] = f
     except ValueError:
       pass
@@ -476,4 +476,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
 if __name__ == "__main__":
   logger.setLevel(logging.DEBUG)
-  meal_plans = get_meal_plans("adult man")
+  meal_plans = get_meal_plans("adult man C")
