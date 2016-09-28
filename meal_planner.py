@@ -142,10 +142,10 @@ for row in foodConstraintsCSheet:
     name = food_ids[row['1.0']]
     # per week
     c = {
-      '14 boy C': {'min': row['Min_2'], 'max': row['Max_2'] * MAX_SCALE},
-      '7 girl C': {'min': row['Min_3'], 'max': row['Max_3'] * MAX_SCALE},
+      '14 boy C': {'min': row['Min_1'], 'max': row['Max_1'] * MAX_SCALE},
+      '7 girl C': {'min': row['Min_2'], 'max': row['Max_2'] * MAX_SCALE},
       'adult man C': {'min': row['Min'], 'max': row['Max'] * MAX_SCALE},
-      'adult women C': {'min': row['Min_1'], 'max': row['Max_1'] * MAX_SCALE}
+      'adult women C': {'min': row['Min per wk'], 'max': row['Max per day'] * MAX_SCALE}
     }
     if 'constraints' not in foods[name]:
       foods[name]['constraints'] = c
@@ -480,4 +480,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
 if __name__ == "__main__":
   logger.setLevel(logging.DEBUG)
-  meal_plans = get_meal_plans("adult man C")
+  meal_plans = get_meal_plans("adult women C")
