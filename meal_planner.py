@@ -113,10 +113,10 @@ for row in foodConstraintsHSheet:
     name = food_ids[row['Food ID']]
     # per week
     foods[name]['constraints'] = {
-      '14 boy': {'min': row['Min_1'], 'max': row['Max_1'] * MAX_SCALE},
-      '7 girl': {'min': row['Min_2'], 'max': row['max'] * MAX_SCALE},
-      'adult man': {'min': row['Min'], 'max': row['Max'] * MAX_SCALE},
-      'adult women': {'min': row[''], 'max': row['_1'] * MAX_SCALE}
+      '14 boy': {'min': float(row['Min_1']), 'max': float(row['Max_1']) * MAX_SCALE},
+      '7 girl': {'min': float(row['Min_2']), 'max': float(row['max']) * MAX_SCALE},
+      'adult man': {'min': float(row['Min']), 'max': float(row['Max']) * MAX_SCALE},
+      'adult women': {'min': float(row['']), 'max': float(row['_1']) * MAX_SCALE}
     }
     try:
       foods[name]['serve size'] = int(row['serve size'])
@@ -142,10 +142,10 @@ for row in foodConstraintsCSheet:
     name = food_ids[row['1.0']]
     # per week
     c = {
-      '14 boy C': {'min': row['Min_1'], 'max': row['Max_1'] * MAX_SCALE},
-      '7 girl C': {'min': row['Min_2'], 'max': row['Max_2'] * MAX_SCALE},
-      'adult man C': {'min': row['Min'], 'max': row['Max'] * MAX_SCALE},
-      'adult women C': {'min': row['Min per wk'], 'max': row['Max per day'] * MAX_SCALE}
+      '14 boy C': {'min': float(row['Min_1']), 'max': float(row['Max_1']) * MAX_SCALE},
+      '7 girl C': {'min': float(row['Min_2']), 'max': float(row['Max_2']) * MAX_SCALE},
+      'adult man C': {'min': float(row['Min']), 'max': float(row['Max']) * MAX_SCALE},
+      'adult women C': {'min': float(row['Min per wk']), 'max': float(row['Max per day']) * MAX_SCALE}
     }
     if 'constraints' not in foods[name]:
       foods[name]['constraints'] = c
@@ -476,8 +476,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       writer.writerow([h, m['price'], m['variety']] + list(m['meal'].values()) + [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']])
   e = time.time()
   logger.debug('write done, took {}s'.format(e-s))
-  return {'meal_plans': meal_plans, 'csv_file': filename}
+  return {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt}
 
 if __name__ == "__main__":
   logger.setLevel(logging.DEBUG)
-  meal_plans = get_meal_plans("adult women C")
+  meal_plans = get_meal_plans("7 girl C")
