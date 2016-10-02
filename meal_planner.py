@@ -471,13 +471,14 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     writer.writerow([dt, iteration_limit, min_serve_size_difference, allowed_varieties, allow_takeaways])
     writer.writerow([])
     writer.writerow(["Results"])
-    writer.writerow(["unique id", "price", "variety"] + list(meal.keys()) + [x + ' ' + y for x in food_groups for y in ['amount', 'price', 'serves']])
+    keys = sorted(meal.keys())
+    writer.writerow(["unique id", "price", "variety"] + keys + [x + ' ' + y for x in food_groups for y in ['amount', 'price', 'serves']])
     for h,m in meal_plans.items():
-      writer.writerow([h, m['price'], m['variety']] + list(m['meal'].values()) + [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']])
+      writer.writerow([h, m['price'], m['variety']] + [m['meal'][k] for k in keys] + [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']])
   e = time.time()
   logger.debug('write done, took {}s'.format(e-s))
   return {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt}
 
 if __name__ == "__main__":
   logger.setLevel(logging.DEBUG)
-  meal_plans = get_meal_plans("7 girl C")
+  meal_plans = get_meal_plans("adult man C")
