@@ -158,51 +158,58 @@ $(document).ready(function() {
     var selected = $.map($(".past_run.selected"), function(n) {
       return n.id;
     });
-    if (selected.length) {
-      var combined_stats = past_runs[selected[0]]['stats']
-      for (var i in selected) {
-        if (i == 0) continue;
-        var ts = selected[i];
-        var s = past_runs[ts]['stats'];
-        combined_stats['total_meal_plans'] *= s.total_meal_plans;
-        for (var k in s) {
-          if (k == 'price' || k == 'variety') {
-            combined_stats[k]['min'] += s[k]['min'];
-            combined_stats[k]['max'] += s[k]['max'];
-            combined_stats[k]['mean'] += s[k]['mean'];
-          } else if (k == 'per_group') {
-            for (var g in s[k]) {
-              for (var measure in s[k][g]) {
-                combined_stats[k][g][measure]['min'] += s[k][g][measure]['min'];
-                combined_stats[k][g][measure]['max'] += s[k][g][measure]['max'];
-                combined_stats[k][g][measure]['mean'] += s[k][g][measure]['mean'];
-              }
+    combined_stats = undefined;
+    var count = 0;
+    for (var i in selected) {
+      var ts = selected[i];
+      var s = past_runs[ts]['stats'];
+      if (!s.total_meal_plans) continue;
+      count++;
+      if (!combined_stats) {
+        combined_stats = JSON.parse(JSON.stringify(s)); // Deep copy to prevent clobbering
+        continue;
+      }
+      combined_stats['total_meal_plans'] *= s.total_meal_plans;
+      for (var k in s) {
+        if (k == 'price' || k == 'variety') {
+          combined_stats[k]['min'] += s[k]['min'];
+          combined_stats[k]['max'] += s[k]['max'];
+          combined_stats[k]['mean'] += s[k]['mean'];
+        } else if (k == 'per_group') {
+          for (var g in s[k]) {
+            for (var measure in s[k][g]) {
+              combined_stats[k][g][measure]['min'] += s[k][g][measure]['min'];
+              combined_stats[k][g][measure]['max'] += s[k][g][measure]['max'];
+              combined_stats[k][g][measure]['mean'] += s[k][g][measure]['mean'];
             }
           }
-        }   
-      }
-      combined_stats['variety']['min'] /= selected.length;
-      combined_stats['variety']['max'] /= selected.length;
-      combined_stats['variety']['mean'] /= selected.length;
-      console.log(combined_stats);
-      
-      var fgSum = "";
-      var keys = Object.keys(combined_stats.per_group).sort();
-      for (var i in keys) {
-        var k = keys[i];
-        var d = combined_stats.per_group[k];
-        fgSum += "<tr><td>" + k + "</td><td>" + round(d['amount']['min']) + "g-" + round(d['amount']['max']) + "g (" + round(d['amount']['mean']) + " avg)</td><td>$" + round(d['price']['min']) + "-$" + round(d['price']['max']) + " ($" + round(d['price']['mean']) + " avg)</td><td>" + round(d['serves']['min']) + "-" + round(d['serves']['max']) + " (" + round(d['serves']['mean']) + " avg)</td></tr>";
-      }
-      
-      var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
-      
-      var priceInfo = 'Price range: $' + round(combined_stats['price']['min']) + ' - $' + round(combined_stats['price']['max']) + ' ($' + round(combined_stats['price']['mean']) + ' avg)';
-      var varietyInfo = 'Variety range: ' + round(combined_stats['variety']['min']) + '-' + round(combined_stats['variety']['max']) + ' (' + round(combined_stats['variety']['mean']) + ' avg)';
-      var html = "Total combined meal plans: " + combined_stats['total_meal_plans'] + '<br>' + priceInfo + '<br>' + varietyInfo + '<br><br>' + foodGroupTable;
-      $('#past_runs_stats').html(html);
-    } else {
-      $('#past_runs_stats').empty();
+        }
+      }   
     }
+    if (count == 0) {
+      $('#past_runs_stats').empty();
+      return;
+    }
+    
+    combined_stats['variety']['min'] /= count;
+    combined_stats['variety']['max'] /= count;
+    combined_stats['variety']['mean'] /= count;
+    console.log(combined_stats);
+    
+    var fgSum = "";
+    var keys = Object.keys(combined_stats.per_group).sort();
+    for (var i in keys) {
+      var k = keys[i];
+      var d = combined_stats.per_group[k];
+      fgSum += "<tr><td>" + k + "</td><td>" + round(d['amount']['min']) + "g-" + round(d['amount']['max']) + "g (" + round(d['amount']['mean']) + " avg)</td><td>$" + round(d['price']['min']) + "-$" + round(d['price']['max']) + " ($" + round(d['price']['mean']) + " avg)</td><td>" + round(d['serves']['min']) + "-" + round(d['serves']['max']) + " (" + round(d['serves']['mean']) + " avg)</td></tr>";
+    }
+    
+    var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
+    
+    var priceInfo = 'Price range: $' + round(combined_stats['price']['min']) + ' - $' + round(combined_stats['price']['max']) + ' ($' + round(combined_stats['price']['mean']) + ' avg)';
+    var varietyInfo = 'Variety range: ' + round(combined_stats['variety']['min']) + '-' + round(combined_stats['variety']['max']) + ' (' + round(combined_stats['variety']['mean']) + ' avg)';
+    var html = "Total combined meal plans: " + combined_stats['total_meal_plans'] + '<br>' + priceInfo + '<br>' + varietyInfo + '<br><br>' + foodGroupTable;
+    $('#past_runs_stats').html(html);
   });
   function get_meal_plans(variables) {
     $('#progress').show();
