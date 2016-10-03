@@ -94,6 +94,9 @@ $(document).ready(function() {
         });
       }
       var person_display = person.replace('7 girl', '7-year-old girl').replace('adult women', 'adult woman').replace('14 boy', '14-year-old boy');
+      if (!person_display.endsWith('C')) {
+        person_display += ' H';
+      }
       $('#person').append("<option " + selected + " value='" + person + "'>" + person_display + "</option>")
     }
     $('select').material_select();
