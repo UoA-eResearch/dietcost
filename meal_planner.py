@@ -454,6 +454,46 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   logger.debug('last meal: {}\nnutritional diff: {}\nnutrients: {}'.format(pprint.pformat(meal), pprint.pformat(diff), pprint.pformat(nutrients)))
   
+  prices = [m['price'] for h,m in meal_plans.items()]
+  varieties = [m['variety'] for h,m in meal_plans.items()]
+  stats = {'total_meal_plans': len(meal_plans)}
+  if prices and varieties:
+    stats = {
+      'price': {
+        'min': min(prices),
+        'max': max(prices),
+        'mean': sum(prices) / len(prices)
+      },
+      'variety': {
+        'min': min(varieties),
+        'max': max(varieties),
+        'mean': sum(varieties) / len(varieties)
+      },
+      'total_meal_plans': len(meal_plans),
+      'per_group': {}
+    }
+    for g in food_groups:
+      prices = [m['per_group'][g]['price'] for h,m in meal_plans.items()]
+      serves = [m['per_group'][g]['serves'] for h,m in meal_plans.items()]
+      amount = [m['per_group'][g]['amount'] for h,m in meal_plans.items()]
+      stats['per_group'][g] = {
+        'price': {
+          'min': min(prices),
+          'max': max(prices),
+          'mean': sum(prices) / len(prices)
+        },
+        'serves': {
+          'min': min(serves),
+          'max': max(serves),
+          'mean': sum(serves) / len(serves)
+        },
+        'amount': {
+          'min': min(amount),
+          'max': max(amount),
+          'mean': sum(amount) / len(amount)
+        }
+      }
+  
   e = time.time()
   logger.info('iterations done, took {}s'.format(e-s))
   logger.debug('Matched meals: {}'.format(pprint.pformat(meal_plans)))
@@ -477,8 +517,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       writer.writerow([h, m['price'], m['variety']] + [m['meal'][k] for k in keys] + [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']])
   e = time.time()
   logger.debug('write done, took {}s'.format(e-s))
-  return {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt}
+  inputs = {'person': person, 'nutrient_targets': selected_person_nutrient_targets, 'iteration_limit': iteration_limit, 'min_serve_size_difference': min_serve_size_difference, 'allowed_varieties': allowed_varieties, 'allow_takeaways': allow_takeaways, 'selected_person_food_group_serve_targets': selected_person_food_group_serve_targets}
+  return {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
 
 if __name__ == "__main__":
   logger.setLevel(logging.DEBUG)
-  meal_plans = get_meal_plans("adult man C")
+  meal_plans = get_meal_plans("adult man", iterations=1000)

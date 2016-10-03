@@ -152,6 +152,58 @@ $(document).ready(function() {
     });
     Materialize.updateTextFields();
   });
+  window.past_runs = {};
+  $("#past_runs_content").on('click', '.past_run', function() {
+    $(this).toggleClass('selected');
+    var selected = $.map($(".past_run.selected"), function(n) {
+      return n.id;
+    });
+    if (selected.length) {
+      var combined_stats = past_runs[selected[0]]['stats']
+      for (var i in selected) {
+        if (i == 0) continue;
+        var ts = selected[i];
+        var s = past_runs[ts]['stats'];
+        combined_stats['total_meal_plans'] *= s.total_meal_plans;
+        for (var k in s) {
+          if (k == 'price' || k == 'variety') {
+            combined_stats[k]['min'] += s[k]['min'];
+            combined_stats[k]['max'] += s[k]['max'];
+            combined_stats[k]['mean'] += s[k]['mean'];
+          } else if (k == 'per_group') {
+            for (var g in s[k]) {
+              for (var measure in s[k][g]) {
+                combined_stats[k][g][measure]['min'] += s[k][g][measure]['min'];
+                combined_stats[k][g][measure]['max'] += s[k][g][measure]['max'];
+                combined_stats[k][g][measure]['mean'] += s[k][g][measure]['mean'];
+              }
+            }
+          }
+        }   
+      }
+      combined_stats['variety']['min'] /= selected.length;
+      combined_stats['variety']['max'] /= selected.length;
+      combined_stats['variety']['mean'] /= selected.length;
+      console.log(combined_stats);
+      
+      var fgSum = "";
+      var keys = Object.keys(combined_stats.per_group).sort();
+      for (var i in keys) {
+        var k = keys[i];
+        var d = combined_stats.per_group[k];
+        fgSum += "<tr><td>" + k + "</td><td>" + round(d['amount']['min']) + "g-" + round(d['amount']['max']) + "g (" + round(d['amount']['mean']) + " avg)</td><td>$" + round(d['price']['min']) + "-$" + round(d['price']['max']) + " ($" + round(d['price']['mean']) + " avg)</td><td>" + round(d['serves']['min']) + "-" + round(d['serves']['max']) + " (" + round(d['serves']['mean']) + " avg)</td></tr>";
+      }
+      
+      var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
+      
+      var priceInfo = 'Price range: $' + round(combined_stats['price']['min']) + ' - $' + round(combined_stats['price']['max']) + ' ($' + round(combined_stats['price']['mean']) + ' avg)';
+      var varietyInfo = 'Variety range: ' + round(combined_stats['variety']['min']) + '-' + round(combined_stats['variety']['max']) + ' (' + round(combined_stats['variety']['mean']) + ' avg)';
+      var html = "Total combined meal plans: " + combined_stats['total_meal_plans'] + '<br>' + priceInfo + '<br>' + varietyInfo + '<br><br>' + foodGroupTable;
+      $('#past_runs_stats').html(html);
+    } else {
+      $('#past_runs_stats').empty();
+    }
+  });
   function get_meal_plans(variables) {
     $('#progress').show();
     $.ajax({
@@ -163,9 +215,11 @@ $(document).ready(function() {
       success: function(data) {
         $('#progress').hide();
         console.log(data);
+        window.past_runs[data.timestamp] = data;
+        var details = data.inputs.person + '<br>Iteration limit: '  + data.inputs.iteration_limit + '<br>Minimum serve size difference: ' + data.inputs.min_serve_size_difference + '<br>' + data.stats.total_meal_plans + ' results';
+        var card = '<div class="col s12 m6"><div class="card past_run" id="' + data.timestamp + '"><div class="card-content"><span class="card-title">' + data.timestamp + '</span><p>' + details + '</p></div></div></div>';
+        $('#past_runs_content').append(card);
         $('#meal_plans').empty();
-        var totalPrice = 0;
-        var totalVariety = 0;
         for (var hash in data.meal_plans) {
           var o = data.meal_plans[hash];
           var items = "";
@@ -188,14 +242,11 @@ $(document).ready(function() {
           var summary = "<p class='price'>Price: $" + round(o.price) + "</p><p class='variety'>Variety: " + round(o.variety) + "</p>";
           var card = "<div class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'>" + foodGroupTable + "<br>" + summary + "</div></div></div>";
           $('#meal_plans').append(card);
-          totalPrice += o.price;
-          totalVariety += o.variety;
         }
         $('.collapsible').collapsible();
-        var l = Object.keys(data.meal_plans).length;
-        var summary = "Total meal plans: " + l + ". ";
-        if (l) {
-          summary += "Average price: $" + round(totalPrice / l) + ". Average variety: " + round(totalVariety / l) + ". ";
+        var summary = "Total meal plans: " + data.stats.total_meal_plans + ". ";
+        if (data.stats.total_meal_plans) {
+          summary += "Average price: $" + round(data.stats.price.mean) + ". Average variety: " + round(data.stats.variety.mean) + ". ";
         }
         summary += "<a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv' download><i class='material-icons left'>play_for_work</i>Download as csv</a>";
         $('#summary').html(summary);
@@ -229,4 +280,5 @@ $(document).ready(function() {
     console.log(variables);
     get_meal_plans(variables);
   });
+  $('.modal-trigger').leanModal();
 });

@@ -35,6 +35,21 @@ input {
   float: right;
 }
 
+#past_runs_trigger {
+  float: right;
+  margin-top: -50px;
+}
+
+.past_run {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+.past_run.selected {
+  background: lightgreen;
+}
+
 #meal_plans>.col:nth-child(n)>.card {
     background: #C0FF93;
 }
