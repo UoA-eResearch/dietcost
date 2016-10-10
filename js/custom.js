@@ -186,8 +186,14 @@ $(document).ready(function() {
               combined_stats[k][g][measure]['mean'] += s[k][g][measure]['mean'];
             }
           }
+        } else if (k == 'nutrition') {
+          for (var n in s[k]) {
+            combined_stats[k][n]['min'] += s[k][n]['min'];
+            combined_stats[k][n]['max'] += s[k][n]['max'];
+            combined_stats[k][n]['mean'] += s[k][n]['mean'];
+          }
         }
-      }   
+      } 
     }
     if (count == 0) {
       $('#past_runs_stats').empty();
@@ -197,6 +203,12 @@ $(document).ready(function() {
     combined_stats['variety']['min'] /= count;
     combined_stats['variety']['max'] /= count;
     combined_stats['variety']['mean'] /= count;
+    
+    for (var n in combined_stats['nutrition']) {
+      combined_stats['nutrition'][n]['min'] /= count;
+      combined_stats['nutrition'][n]['max'] /= count;
+      combined_stats['nutrition'][n]['mean'] /= count;
+    }
     console.log(combined_stats);
     
     var fgSum = "";
@@ -207,11 +219,20 @@ $(document).ready(function() {
       fgSum += "<tr><td>" + k + "</td><td>" + round(d['amount']['min']) + "g-" + round(d['amount']['max']) + "g (" + round(d['amount']['mean']) + " avg)</td><td>$" + round(d['price']['min']) + "-$" + round(d['price']['max']) + " ($" + round(d['price']['mean']) + " avg)</td><td>" + round(d['serves']['min']) + "-" + round(d['serves']['max']) + " (" + round(d['serves']['mean']) + " avg)</td></tr>";
     }
     
+    var nSum = "";
+    var keys = Object.keys(combined_stats.nutrition).sort();
+    for (var i in keys) {
+      var k = keys[i];
+      var d = combined_stats.nutrition[k];
+      nSum += "<tr><td>" + k + "</td><td>" + round(d['min']) + "</td><td>" + round(d['mean']) + "</td><td>" + round(d['max']) + "</td></tr>";
+    }
+    
     var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
+    var nutrientTable = "<h4>Nutritional breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Measure</th><th>Min</th><th>Average</th><th>Max</th></thead>" + nSum + "</table>";
     
     var priceInfo = 'Price range: $' + round(combined_stats['price']['min']) + ' - $' + round(combined_stats['price']['max']) + ' ($' + round(combined_stats['price']['mean']) + ' avg)';
     var varietyInfo = 'Variety range: ' + round(combined_stats['variety']['min']) + '-' + round(combined_stats['variety']['max']) + ' (' + round(combined_stats['variety']['mean']) + ' avg)';
-    var html = "Total combined meal plans: " + combined_stats['total_meal_plans'] + '<br>' + priceInfo + '<br>' + varietyInfo + '<br><br>' + foodGroupTable;
+    var html = "Total combined meal plans: " + combined_stats['total_meal_plans'] + '<br>' + priceInfo + '<br>' + varietyInfo + '<br><br>' + foodGroupTable + "<br><br>" + nutrientTable;
     $('#past_runs_stats').html(html);
   });
   function get_meal_plans(variables) {

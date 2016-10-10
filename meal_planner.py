@@ -390,7 +390,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         target_fg = random.choice(off_food_groups)
       else:
         variety = np.average(varieties, weights=amounts)
-        meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variety': variety, 'per_group': per_group}
+        meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'nutrition': nutrients, 'variety': variety, 'per_group': per_group}
         logger.debug('Hit!')
     else:
       off_measures = []
@@ -470,7 +470,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         'mean': sum(varieties) / len(varieties)
       },
       'total_meal_plans': len(meal_plans),
-      'per_group': {}
+      'per_group': {},
+      'nutrition': {}
     }
     for g in food_groups:
       prices = [m['per_group'][g]['price'] for h,m in meal_plans.items()]
@@ -493,6 +494,13 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           'mean': sum(amount) / len(amount)
         }
       }
+    for k,v in targetmap.items():
+      values = [m['nutrition'][k] for h,m in meal_plans.items()]
+      stats['nutrition'][v] = {
+        'min': min(values),
+        'max': max(values),
+        'mean': sum(values) / len(values)
+      }
   
   e = time.time()
   logger.info('iterations done, took {}s'.format(e-s))
@@ -512,9 +520,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     writer.writerow([])
     writer.writerow(["Results"])
     keys = sorted(meal.keys())
-    writer.writerow(["unique id", "price", "variety"] + keys + [x + ' ' + y for x in food_groups for y in ['amount', 'price', 'serves']])
+    writer.writerow(["unique id", "price", "variety"] + keys + [x + ' ' + y for x in food_groups for y in ['amount', 'price', 'serves']] + [v for k,v in targetmap.items()])
     for h,m in meal_plans.items():
-      writer.writerow([h, m['price'], m['variety']] + [m['meal'][k] for k in keys] + [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']])
+      writer.writerow([h, m['price'], m['variety']] + [m['meal'][k] for k in keys] + [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']] + [m['nutrition'][k] for k,v in targetmap.items()])
   e = time.time()
   logger.debug('write done, took {}s'.format(e-s))
   inputs = {'person': person, 'nutrient_targets': selected_person_nutrient_targets, 'iteration_limit': iteration_limit, 'min_serve_size_difference': min_serve_size_difference, 'allowed_varieties': allowed_varieties, 'allow_takeaways': allow_takeaways, 'selected_person_food_group_serve_targets': selected_person_food_group_serve_targets}
@@ -522,4 +530,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
 if __name__ == "__main__":
   logger.setLevel(logging.DEBUG)
-  meal_plans = get_meal_plans("14 boy")
+  meal_plans = get_meal_plans("adult man")
