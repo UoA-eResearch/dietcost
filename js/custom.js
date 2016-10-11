@@ -161,53 +161,95 @@ $(document).ready(function() {
     var selected = $.map($(".past_run.selected"), function(n) {
       return n.id;
     });
-    combined_stats = undefined;
-    var count = 0;
+    combined_stats = {};
+    // Sum up like persona stats
     for (var i in selected) {
       var ts = selected[i];
-      var s = past_runs[ts]['stats'];
+      var s = past_runs[ts].stats;
+      var p = past_runs[ts].inputs.person;
       if (!s.total_meal_plans) continue;
-      count++;
-      if (!combined_stats) {
-        combined_stats = JSON.parse(JSON.stringify(s)); // Deep copy to prevent clobbering
+      if (!combined_stats[p]) {
+        combined_stats[p] = JSON.parse(JSON.stringify(s)); // Deep copy to prevent clobbering
+        combined_stats[p].count = 1;
         continue;
       }
-      combined_stats['total_meal_plans'] *= s.total_meal_plans;
+      combined_stats[p].count++;
+      combined_stats[p]['total_meal_plans'] += s.total_meal_plans;
       for (var k in s) {
         if (k == 'price' || k == 'variety') {
-          combined_stats[k]['min'] += s[k]['min'];
-          combined_stats[k]['max'] += s[k]['max'];
-          combined_stats[k]['mean'] += s[k]['mean'];
+          combined_stats[p][k]['min'] += s[k]['min'];
+          combined_stats[p][k]['max'] += s[k]['max'];
+          combined_stats[p][k]['mean'] += s[k]['mean'];
         } else if (k == 'per_group') {
           for (var g in s[k]) {
             for (var measure in s[k][g]) {
-              combined_stats[k][g][measure]['min'] += s[k][g][measure]['min'];
-              combined_stats[k][g][measure]['max'] += s[k][g][measure]['max'];
-              combined_stats[k][g][measure]['mean'] += s[k][g][measure]['mean'];
+              combined_stats[p][k][g][measure]['min'] += s[k][g][measure]['min'];
+              combined_stats[p][k][g][measure]['max'] += s[k][g][measure]['max'];
+              combined_stats[p][k][g][measure]['mean'] += s[k][g][measure]['mean'];
             }
           }
         } else if (k == 'nutrition') {
           for (var n in s[k]) {
-            combined_stats[k][n]['min'] += s[k][n]['min'];
-            combined_stats[k][n]['max'] += s[k][n]['max'];
-            combined_stats[k][n]['mean'] += s[k][n]['mean'];
+            combined_stats[p][k][n]['min'] += s[k][n]['min'];
+            combined_stats[p][k][n]['max'] += s[k][n]['max'];
+            combined_stats[p][k][n]['mean'] += s[k][n]['mean'];
           }
         }
       } 
     }
-    if (count == 0) {
+    
+    console.log(combined_stats);
+    
+    var people = Object.keys(combined_stats);
+    combined_stats.total_meal_plans = 1;
+    combined_stats.count = 0;
+    
+    for (var i in people) {
+      var p = people[i];
+      var s = combined_stats[p];
+      combined_stats.total_meal_plans *= s.total_meal_plans;
+      combined_stats.count++;
+      for (var k in s) {
+        if (!combined_stats[k]) combined_stats[k] = {}
+        if(k == 'price' || k == 'variety') {
+          if (!combined_stats[k]['min']) combined_stats[k] = {'min':0,'max':0,'mean':0}
+          combined_stats[k]['min'] += s[k]['min'] / s.count;
+          combined_stats[k]['max'] += s[k]['max'] / s.count;
+          combined_stats[k]['mean'] += s[k]['mean'] / s.count;
+        } else if (k == 'per_group') {
+          for (var g in s[k]) {
+            if (!combined_stats[k][g]) combined_stats[k][g] = {}
+            for (var measure in s[k][g]) {
+              if (!combined_stats[k][g][measure]) combined_stats[k][g][measure] = {'min':0, 'max': 0, 'mean': 0}
+              combined_stats[k][g][measure]['min'] += s[k][g][measure]['min'] / s.count;
+              combined_stats[k][g][measure]['max'] += s[k][g][measure]['max'] / s.count;
+              combined_stats[k][g][measure]['mean'] += s[k][g][measure]['mean'] / s.count;
+            }
+          }
+        } else if (k == 'nutrition') {
+          for (var n in s[k]) {
+            if (!combined_stats[k][n]) combined_stats[k][n] = {'min': 0, 'max': 0, 'mean': 0}
+            combined_stats[k][n]['min'] += s[k][n]['min'] / s.count;
+            combined_stats[k][n]['max'] += s[k][n]['max'] / s.count;
+            combined_stats[k][n]['mean'] += s[k][n]['mean'] / s.count;
+          }
+        }
+      }
+    }
+
+    if (combined_stats.count == 0) {
       $('#past_runs_stats').empty();
       return;
     }
     
-    combined_stats['variety']['min'] /= count;
-    combined_stats['variety']['max'] /= count;
-    combined_stats['variety']['mean'] /= count;
+    combined_stats['variety']['min'] /= combined_stats.count;
+    combined_stats['variety']['max'] /= combined_stats.count;
+    combined_stats['variety']['mean'] /= combined_stats.count;
     
     for (var n in combined_stats['nutrition']) {
-      combined_stats['nutrition'][n]['min'] /= count;
-      combined_stats['nutrition'][n]['max'] /= count;
-      combined_stats['nutrition'][n]['mean'] /= count;
+      combined_stats['nutrition'][n]['min'] /= combined_stats.count;
+      combined_stats['nutrition'][n]['max'] /= combined_stats.count;
+      combined_stats['nutrition'][n]['mean'] /= combined_stats.count;
     }
     console.log(combined_stats);
     
