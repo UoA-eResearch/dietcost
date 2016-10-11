@@ -228,7 +228,7 @@ $(document).ready(function() {
     }
     
     var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
-    var nutrientTable = "<h4>Nutritional breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Measure</th><th>Min</th><th>Average</th><th>Max</th></thead>" + nSum + "</table>";
+    var nutrientTable = "<h4>Average nutrition</h4><br><table class='highlight bordered'><thead><tr><th>Measure</th><th>Min</th><th>Average</th><th>Max</th></thead>" + nSum + "</table>";
     
     var priceInfo = 'Price range: $' + round(combined_stats['price']['min']) + ' - $' + round(combined_stats['price']['max']) + ' ($' + round(combined_stats['price']['mean']) + ' avg)';
     var varietyInfo = 'Variety range: ' + round(combined_stats['variety']['min']) + '-' + round(combined_stats['variety']['max']) + ' (' + round(combined_stats['variety']['mean']) + ' avg)';
