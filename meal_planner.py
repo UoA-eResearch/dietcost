@@ -507,7 +507,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   logger.debug('Matched meals: {}'.format(pprint.pformat(meal_plans)))
   logger.info('{} matched meals'.format(len(meal_plans)))
   s = time.time()
-  dt = str(datetime.datetime.now())
+  dt = str(datetime.datetime.now()).replace(':', '_')
   filename = 'csvs/{}.csv'.format(dt)
   with open(filename, 'w') as f:
     writer = csv.writer(f)
