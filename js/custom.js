@@ -176,7 +176,12 @@ $(document).ready(function() {
       combined_stats[p].count++;
       combined_stats[p]['total_meal_plans'] += s.total_meal_plans;
       for (var k in s) {
-        if (k == 'price' || k == 'variety') {
+        if (k == 'price') {
+          combined_stats[p][k]['min'] += s[k]['min'];
+          combined_stats[p][k]['max'] += s[k]['max'];
+          combined_stats[p][k]['mean'] += s[k]['mean'];
+          combined_stats[p][k]['std'] += s[k]['std'];
+        } else if (k == 'variety') {
           combined_stats[p][k]['min'] += s[k]['min'];
           combined_stats[p][k]['max'] += s[k]['max'];
           combined_stats[p][k]['mean'] += s[k]['mean'];
@@ -211,7 +216,13 @@ $(document).ready(function() {
       combined_stats.count++;
       for (var k in s) {
         if (!combined_stats[k]) combined_stats[k] = {}
-        if(k == 'price' || k == 'variety') {
+        if (k == 'price') {
+          if (!combined_stats[k]['min']) combined_stats[k] = {'min':0,'max':0,'mean':0, 'std': 0}
+          combined_stats[k]['min'] += s[k]['min'] / s.count;
+          combined_stats[k]['max'] += s[k]['max'] / s.count;
+          combined_stats[k]['mean'] += s[k]['mean'] / s.count;
+          combined_stats[k]['std'] += s[k]['std'] / s.count;
+        } else if (k == 'variety') {
           if (!combined_stats[k]['min']) combined_stats[k] = {'min':0,'max':0,'mean':0}
           combined_stats[k]['min'] += s[k]['min'] / s.count;
           combined_stats[k]['max'] += s[k]['max'] / s.count;
@@ -251,6 +262,11 @@ $(document).ready(function() {
       combined_stats['nutrition'][n]['max'] /= combined_stats.count;
       combined_stats['nutrition'][n]['mean'] /= combined_stats.count;
     }
+    
+    var moe = 1.96 * combined_stats.price.std / Math.sqrt(combined_stats.total_meal_plans);
+    var lowerCI = combined_stats.price.mean - moe;
+    var upperCI = combined_stats.price.mean + moe;
+    
     console.log(combined_stats);
     
     var fgSum = "";
@@ -272,7 +288,7 @@ $(document).ready(function() {
     var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
     var nutrientTable = "<h4>Average nutrition</h4><br><table class='highlight bordered'><thead><tr><th>Measure</th><th>Min</th><th>Average</th><th>Max</th></thead>" + nSum + "</table>";
     
-    var priceInfo = 'Price range: $' + round(combined_stats['price']['min']) + ' - $' + round(combined_stats['price']['max']) + ' ($' + round(combined_stats['price']['mean']) + ' avg)';
+    var priceInfo = 'Price range: $' + round(combined_stats['price']['min']) + ' - $' + round(combined_stats['price']['max']) + ' ($' + round(combined_stats['price']['mean']) + ' avg). σ = ' + round(combined_stats.price.std) + ', 95% CI range = $' + round(lowerCI) + ' - $' + round(upperCI);
     var varietyInfo = 'Variety range: ' + round(combined_stats['variety']['min']) + '-' + round(combined_stats['variety']['max']) + ' (' + round(combined_stats['variety']['mean']) + ' avg)';
     var html = "Total combined meal plans: " + combined_stats['total_meal_plans'] + '<br>' + priceInfo + '<br>' + varietyInfo + '<br><br>' + foodGroupTable + "<br><br>" + nutrientTable;
     $('#past_runs_stats').html(html);

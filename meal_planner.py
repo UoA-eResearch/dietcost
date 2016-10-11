@@ -462,7 +462,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       'price': {
         'min': min(prices),
         'max': max(prices),
-        'mean': sum(prices) / len(prices)
+        'mean': sum(prices) / len(prices),
+        'std': np.std(prices)
       },
       'variety': {
         'min': min(varieties),
