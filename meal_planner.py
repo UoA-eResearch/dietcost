@@ -368,36 +368,39 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
     if check_nutritional_diff(diff):
       h = hash(frozenset(meal.items()))
-      total_price = 0
-      varieties = []
-      amounts = []
-      per_group = dict([(x,{'amount': 0, 'price': 0, 'serves': 0}) for x in food_groups])
-      for item, amount in meal.items():
-        price = foods[item]['price/100g'] / 100 * amount
-        total_price += price
-        varieties.append(foods[item]['Variety'])
-        amounts.append(amount)
-        fg = foods[item]['Food group']
-        per_group[fg]['amount'] += amount
-        per_group[fg]['serves'] += amount / foods[item]['serve size']
-        per_group[fg]['price'] += price
-        if foods[item]['core/disc'] == 'd':
-          per_group['Discretionary']['amount'] += amount
-          per_group['Discretionary']['serves'] += amount / foods[item]['serve size']
-          per_group['Discretionary']['price'] += price
-      off_food_groups = []
-      for fg in per_group:
-        if fg in selected_person_food_group_serve_targets:
-          c = selected_person_food_group_serve_targets[fg]
-          v = per_group[fg]['serves']
-          if v < c['min'] or v > c['max']:
-            off_food_groups.append(fg)
-      if off_food_groups:
-        target_fg = random.choice(off_food_groups)
+      if h in meal_plans:
+        logger.debug('Already recorded {}'.format(h))
       else:
-        variety = np.average(varieties, weights=amounts)
-        meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'nutrition': nutrients, 'variety': variety, 'per_group': per_group}
-        logger.debug('Hit!')
+        total_price = 0
+        varieties = []
+        amounts = []
+        per_group = dict([(x,{'amount': 0, 'price': 0, 'serves': 0}) for x in food_groups])
+        for item, amount in meal.items():
+          price = foods[item]['price/100g'] / 100 * amount
+          total_price += price
+          varieties.append(foods[item]['Variety'])
+          amounts.append(amount)
+          fg = foods[item]['Food group']
+          per_group[fg]['amount'] += amount
+          per_group[fg]['serves'] += amount / foods[item]['serve size']
+          per_group[fg]['price'] += price
+          if foods[item]['core/disc'] == 'd':
+            per_group['Discretionary']['amount'] += amount
+            per_group['Discretionary']['serves'] += amount / foods[item]['serve size']
+            per_group['Discretionary']['price'] += price
+        off_food_groups = []
+        for fg in per_group:
+          if fg in selected_person_food_group_serve_targets:
+            c = selected_person_food_group_serve_targets[fg]
+            v = per_group[fg]['serves']
+            if v < c['min'] or v > c['max']:
+              off_food_groups.append(fg)
+        if off_food_groups:
+          target_fg = random.choice(off_food_groups)
+        else:
+          variety = np.average(varieties, weights=amounts)
+          meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'nutrition': nutrients, 'variety': variety, 'per_group': per_group}
+          logger.debug('Hit!')
     else:
       off_measures = []
       for measure, value in diff.items():
