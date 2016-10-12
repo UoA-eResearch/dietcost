@@ -108,6 +108,8 @@ for row in foodsSheet:
   if row['Food group'] not in food_groups:
     food_groups[row['Food group']] = {}
 
+food_groups['Discretionary'] = {}
+
 for row in foodConstraintsHSheet:
   if row['Food ID'] in food_ids:
     name = food_ids[row['Food ID']]
@@ -379,6 +381,10 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         per_group[fg]['amount'] += amount
         per_group[fg]['serves'] += amount / foods[item]['serve size']
         per_group[fg]['price'] += price
+        if foods[item]['core/disc'] == 'd':
+          per_group['Discretionary']['amount'] += amount
+          per_group['Discretionary']['serves'] += amount / foods[item]['serve size']
+          per_group['Discretionary']['price'] += price
       off_food_groups = []
       for fg in per_group:
         if fg in selected_person_food_group_serve_targets:
