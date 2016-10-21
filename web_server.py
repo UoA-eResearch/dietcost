@@ -49,4 +49,8 @@ def get_food_group_targets():
   return meal_planner.food_groups
 
 port = int(os.environ.get('PORT', 8080))
-run(host='0.0.0.0', port=port, debug=True, server='gunicorn', workers=8)
+
+if __name__ == "__main__":
+  run(host='0.0.0.0', port=port, debug=True, server='gunicorn', workers=8)
+
+app = default_app()
