@@ -115,10 +115,10 @@ for row in foodConstraintsHSheet:
     name = food_ids[row['Food ID']]
     # per week
     foods[name]['constraints'] = {
-      '14 boy': {'min': float(row['Min_1']), 'max': float(row['Max_1']) * MAX_SCALE},
-      '7 girl': {'min': float(row['Min_2']), 'max': float(row['max']) * MAX_SCALE},
-      'adult man': {'min': float(row['Min']), 'max': float(row['Max']) * MAX_SCALE},
-      'adult women': {'min': float(row['']), 'max': float(row['_1']) * MAX_SCALE}
+      '14 boy': {'min': float(row['Min_1']) * 2, 'max': float(row['Max_1']) * 2 * MAX_SCALE},
+      '7 girl': {'min': float(row['Min_2']) * 2, 'max': float(row['max']) * 2 * MAX_SCALE},
+      'adult man': {'min': float(row['Min']) * 2, 'max': float(row['Max']) * 2 * MAX_SCALE},
+      'adult women': {'min': float(row['']) * 2, 'max': float(row['_1']) * 2 * MAX_SCALE}
     }
     try:
       foods[name]['serve size'] = int(row['serve size'])
@@ -144,10 +144,10 @@ for row in foodConstraintsCSheet:
     name = food_ids[row['1.0']]
     # per week
     c = {
-      '14 boy C': {'min': float(row['Min_1']), 'max': float(row['Max_1']) * MAX_SCALE},
-      '7 girl C': {'min': float(row['Min_2']), 'max': float(row['Max_2']) * MAX_SCALE},
-      'adult man C': {'min': float(row['Min']), 'max': float(row['Max']) * MAX_SCALE},
-      'adult women C': {'min': float(row['Min per wk']), 'max': float(row['Max per day']) * MAX_SCALE}
+      '14 boy C': {'min': float(row['Min_1']) * 2, 'max': float(row['Max_1']) * 2 * MAX_SCALE},
+      '7 girl C': {'min': float(row['Min_2']) * 2, 'max': float(row['Max_2']) * 2 * MAX_SCALE},
+      'adult man C': {'min': float(row['Min']) * 2, 'max': float(row['Max']) * 2 * MAX_SCALE},
+      'adult women C': {'min': float(row['Min per wk']) * 2, 'max': float(row['Max per day']) * 2 * MAX_SCALE}
     }
     if 'constraints' not in foods[name]:
       foods[name]['constraints'] = c
@@ -324,19 +324,19 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   for measure in selected_person_nutrient_targets:
     try:
-      # convert to weekly
+      # convert to fortnightly
       if '%' not in measure:
-        selected_person_nutrient_targets[measure]['max'] *= 7
+        selected_person_nutrient_targets[measure]['max'] *= 14
         try:
-          selected_person_nutrient_targets[measure]['min'] *= 7
+          selected_person_nutrient_targets[measure]['min'] *= 14
         except KeyError:
           pass
     except TypeError:
       pass
 
   for fg in selected_person_food_group_serve_targets:
-    selected_person_food_group_serve_targets[fg]['max'] *= 7
-    selected_person_food_group_serve_targets[fg]['min'] *= 7
+    selected_person_food_group_serve_targets[fg]['max'] *= 14
+    selected_person_food_group_serve_targets[fg]['min'] *= 14
 
   logger.info('{} selected. nutritional targets: {}'.format(person, selected_person_nutrient_targets))
   # Get a random starting meal plan
