@@ -109,6 +109,9 @@ for row in foodsSheet:
     food_groups[row['Food group']] = {}
 
 food_groups['Discretionary'] = {}
+food_groups['Starchy vegetables'] = {}
+
+isStarchy = False
 
 for row in foodConstraintsHSheet:
   if row['Food ID'] in food_ids:
@@ -124,12 +127,18 @@ for row in foodConstraintsHSheet:
       foods[name]['serve size'] = int(row['serve size'])
     except ValueError:
       pass
+    if isStarchy:
+      foods[name]['Food group'] = 'Starchy vegetables'
   else:
     partial = row['Food'].split()[0]
     if partial == 'Meat,':
       partial = 'Protein'
-    if partial == 'Fats':
+    if partial == 'Fats' or partial == 'grams':
       continue
+    if partial == 'Starchy':
+      isStarchy = True
+    else:
+      isStarchy = False
     for fg in food_groups:
       if partial in fg:
         food_groups[fg]['constraints_serves'] = {
