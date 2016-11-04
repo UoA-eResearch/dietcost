@@ -215,7 +215,7 @@ for row in nutrientsTargetsSheet:
     elif measure == 'sodium mg':
       n[measure] = {'min': 0, 'max': value}
     elif measure == 'fibre g':
-      n[measure] = {'min': value - (value*0.015), 'max': value + (value*0.5)}
+      n[measure] = {'min': value - (value*0.015), 'max': value * 2}
   n["Alcohol % energy"] = {'min': 0, 'max': 50}
   n["Discretionary foods % energy"] = {'min': 0, 'max': 50}
   n["Total sugars % energy"] = {'min': 0, 'max': 100}
