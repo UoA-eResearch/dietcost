@@ -95,6 +95,7 @@ nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets
 foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Food constraints H'), header=2)
 foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C'), header=1)
 foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
+variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
 
 for row in foodsSheet:
   name = row['Commonly consumed food']
@@ -103,6 +104,7 @@ for row in foodsSheet:
   elif row['Food group'] == 'Protein foods: Meat, poultry, seafood, eggs, legumes, nuts':
     row['Food group'] = 'Protein'
   foods[name] = row
+  foods[name]['variable prices'] = []
   food_ids[row['Commonly consumed food ID']] = name
 
   if row['Food group'] not in food_groups:
@@ -129,7 +131,7 @@ for row in foodConstraintsHSheet:
       pass
     if isStarchy:
       foods[name]['Food group'] = 'Starchy vegetables'
-  else:
+  elif row['Food']:
     partial = row['Food'].split()[0]
     if partial == 'Meat,':
       partial = 'Protein'
@@ -166,7 +168,7 @@ for row in foodConstraintsCSheet:
       foods[name]['serve size'] = int(row['_4'])
     except ValueError:
       pass
-  else:
+  elif row['']:
     partial = row[''].split()[0]
     if partial == 'Meat,':
       partial = 'Protein'
@@ -252,9 +254,16 @@ for row in nutrientsTargetsCSheet:
 for row in foodPricesSheet:
   try:
     name = food_ids[row['Commonly consumed food ID']]
-    foods[name]['price/100g'] = row['price/100g']
+    foods[name]['price/100g'] = row['price/100g AP']
   except KeyError:
     pass
+
+for row in variableFoodPricesSheet:
+  name = food_ids[row['Food Id']]
+  foods[name]['variable prices'].append(row)
+
+#pprint.pprint(foods)
+#exit(1)
 
 e = time.time()
 logger.debug('load done, took {}s'.format(e-s))
