@@ -92,8 +92,8 @@ foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
 nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
 nutrientsTargetsSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=0, limit=4)
 nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=37, limit=8)
-foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Food constraints H'), header=2)
-foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C'), header=1)
+foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Food constraints H (2)'), header=2)
+foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C (2)'), header=1)
 foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
 variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
 
@@ -120,10 +120,10 @@ for row in foodConstraintsHSheet:
     name = food_ids[row['Food ID']]
     # per week
     foods[name]['constraints'] = {
-      '14 boy': {'min': float(row['Min_1']) * 2, 'max': float(row['Max_1']) * 2 * MAX_SCALE},
-      '7 girl': {'min': float(row['Min_2']) * 2, 'max': float(row['max']) * 2 * MAX_SCALE},
-      'adult man': {'min': float(row['Min']) * 2, 'max': float(row['Max']) * 2 * MAX_SCALE},
-      'adult women': {'min': float(row['']) * 2, 'max': float(row['_1']) * 2 * MAX_SCALE}
+      '14 boy': {'min': float(row['Min per week_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
+      '7 girl': {'min': float(row['Min per week_3']) * 2, 'max': float(row['Max per week_3']) * 2 * MAX_SCALE},
+      'adult man': {'min': float(row['Min per week']) * 2, 'max': float(row['Max per week']) * 2 * MAX_SCALE},
+      'adult women': {'min': float(row['Min per week_1']) * 2, 'max': float(row['Max per week_1']) * 2 * MAX_SCALE}
     }
     try:
       foods[name]['serve size'] = int(row['serve size'])
@@ -144,10 +144,10 @@ for row in foodConstraintsHSheet:
     for fg in food_groups:
       if partial in fg:
         food_groups[fg]['constraints_serves'] = {
-          'adult man': {'min': row['Min'] / 7.0, 'max': row['Max'] / 7.0},
-          'adult women': {'min': row[''] / 7.0, 'max': row['_1'] / 7.0},
-          '14 boy': {'min': row['Min_1'] / 7.0, 'max': row['Max_1'] / 7.0},
-          '7 girl': {'min': row['Min_2'] / 7.0, 'max': row['max'] / 7.0}
+          'adult man': {'min': row['Min per week'] / 7.0, 'max': row['Max per week'] / 7.0},
+          'adult women': {'min': row['Min per week_1'] / 7.0, 'max': row['Max per week_1'] / 7.0},
+          '14 boy': {'min': row['Min per week_2'] / 7.0, 'max': row['Max per week_2'] / 7.0},
+          '7 girl': {'min': row['Min per week_3'] / 7.0, 'max': row['Max per week_3'] / 7.0}
         }
 
 for row in foodConstraintsCSheet:
@@ -155,17 +155,17 @@ for row in foodConstraintsCSheet:
     name = food_ids[row['1.0']]
     # per week
     c = {
-      '14 boy C': {'min': float(row['Min_1']) * 2, 'max': float(row['Max_1']) * 2 * MAX_SCALE},
-      '7 girl C': {'min': float(row['Min_2']) * 2, 'max': float(row['Max_2']) * 2 * MAX_SCALE},
-      'adult man C': {'min': float(row['Min']) * 2, 'max': float(row['Max']) * 2 * MAX_SCALE},
-      'adult women C': {'min': float(row['Min per wk']) * 2, 'max': float(row['Max per day']) * 2 * MAX_SCALE}
+      '14 boy C': {'min': float(row['Min per wk_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
+      '7 girl C': {'min': float(row['Min per wk_3']) * 2, 'max': float(row['Max per week_3']) * 2 * MAX_SCALE},
+      'adult man C': {'min': float(row['Min per wk']) * 2, 'max': float(row['Max per week']) * 2 * MAX_SCALE},
+      'adult women C': {'min': float(row['Min per wk_1']) * 2, 'max': float(row['Max per week_1']) * 2 * MAX_SCALE}
     }
     if 'constraints' not in foods[name]:
       foods[name]['constraints'] = c
     else:
       foods[name]['constraints'].update(c)
     try:
-      foods[name]['serve size'] = int(row['_4'])
+      foods[name]['serve size'] = int(row['_3'])
     except ValueError:
       pass
   elif row['']:
@@ -447,10 +447,10 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       nt = selected_person_nutrient_targets[target_measure]
       if diff[target_measure] > 0:
         logger.debug("We're too high on {} - {} > {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['max']))
-        r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * min_serve_size_difference))
+        r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * min_serve_size_difference))[-10:]
       else:
         logger.debug("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
-        r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))
+        r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))[:10]
       logger.debug('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[food]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
     elif target_fg:
       c = selected_person_food_group_serve_targets[target_fg]
