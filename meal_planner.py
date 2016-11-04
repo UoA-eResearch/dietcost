@@ -10,8 +10,9 @@ import copy
 import logging
 import os
 import csv
+import sys
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger('meal_planner')
 
 try:
@@ -42,7 +43,8 @@ targetmap = {
   'Sugars': 'Total sugars % energy',
   'Fibre': 'fibre g',
   'Alcohol % energy': 'Alcohol % energy',
-  'Discretionary foods % energy': 'Discretionary foods % energy'
+  'Discretionary foods % energy': 'Discretionary foods % energy',
+  'Red meat': 'Red meat g'
 }
 
 reverse_targetmap = dict([(v,k) for k,v in targetmap.items()])
@@ -103,14 +105,19 @@ for row in foodsSheet:
     row['Food group'] = 'Sauces'
   elif row['Food group'] == 'Protein foods: Meat, poultry, seafood, eggs, legumes, nuts':
     row['Food group'] = 'Protein'
+
+  row['redmeat'] = row['Commonly consumed food ID'] in ["05067", "05069", "05073", "05074", "05089"]
+
   foods[name] = row
   foods[name]['variable prices'] = []
   food_ids[row['Commonly consumed food ID']] = name
+  
+  if row['Food group'] == ' Discretionary foods':
+    row['Food group'] = 'Discretionary foods'
 
   if row['Food group'] not in food_groups:
     food_groups[row['Food group']] = {}
 
-food_groups['Discretionary'] = {}
 food_groups['Starchy vegetables'] = {}
 
 isStarchy = False
@@ -219,6 +226,7 @@ for row in nutrientsTargetsSheet:
   n["Alcohol % energy"] = {'min': 0, 'max': 50}
   n["Discretionary foods % energy"] = {'min': 0, 'max': 50}
   n["Total sugars % energy"] = {'min': 0, 'max': 100}
+  n["Red meat g"] = {'min': 0, 'max': 500/7.0}
   n.pop("Free sugars % energy*")
   nutrient_targets[row['Healthy diet per day']] = n
 
@@ -271,7 +279,7 @@ logger.debug('load done, took {}s'.format(e-s))
 # Generate a plan
 
 def get_nutrients(meal):
-  nutrients_sum = {'Discretionary foods % energy': 0, 'Alcohol % energy': 0}
+  nutrients_sum = {'Discretionary foods % energy': 0, 'Alcohol % energy': 0, 'Red meat': 0}
 
   for food, amount in meal.items():
     for measure, value in foods[food]['nutrition'].items():
@@ -284,8 +292,10 @@ def get_nutrients(meal):
         nutrients_sum[measure] = value
     if foods[food]['Food group'] == 'Alcohol':
       nutrients_sum['Alcohol % energy'] += (foods[food]['nutrition']['Energy kJ/100g'] / 100) * amount
-    if foods[food]['core/disc'] == 'd':
+    if foods[food]['Food group'] == 'Discretionary foods':
       nutrients_sum['Discretionary foods % energy'] += (foods[food]['nutrition']['Energy kJ/100g'] / 100) * amount
+    if foods[food]['redmeat']:
+      nutrients_sum['Red meat'] += amount
 
   # Convert g to % E
   for k, v in nutrients_sum.items():
@@ -402,10 +412,6 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           per_group[fg]['amount'] += amount
           per_group[fg]['serves'] += amount / foods[item]['serve size']
           per_group[fg]['price'] += price
-          if foods[item]['core/disc'] == 'd':
-            per_group['Discretionary']['amount'] += amount
-            per_group['Discretionary']['serves'] += amount / foods[item]['serve size']
-            per_group['Discretionary']['price'] += price
         off_food_groups = []
         for fg in per_group:
           if fg in selected_person_food_group_serve_targets:
@@ -435,7 +441,10 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
             if foods[item]['Food group'] == 'Alcohol':
               foods_that_impact_this_measure.append(item)
           elif target_measure == 'Discretionary foods % energy':
-            if foods[item]['core/disc'] == 'd':
+            if foods[item]['Food group'] == 'Discretionary foods':
+              foods_that_impact_this_measure.append(item)
+          elif target_measure == 'Red meat g':
+            if foods[item]['redmeat']:
               foods_that_impact_this_measure.append(item)
           elif foods[item]['nutrition'][reverse_target_measure] != 0:
             foods_that_impact_this_measure.append(item)
