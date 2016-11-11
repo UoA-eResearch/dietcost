@@ -268,10 +268,17 @@ for row in foodPricesSheet:
 
 for row in variableFoodPricesSheet:
   name = food_ids[row['Food Id']]
-  foods[name]['variable prices'].append(row)
-
-#pprint.pprint(foods)
-#exit(1)
+  foods[name]['variable prices'].append({
+    'outlet type': row['outlet type'],
+    'region': row['region'],
+    'deprivation': row['deprivation'],
+    'discount': row['deprivation'] == 'yes',
+    'population group': row['population group'],
+    'season': row['season'],
+    'type': row['type'],
+    'urban': row['urban'] == 'yes',
+    'price': row['price/100g']
+  })
 
 e = time.time()
 logger.debug('load done, took {}s'.format(e-s))
