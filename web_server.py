@@ -66,6 +66,13 @@ def get_variable_price_options():
 port = int(os.environ.get('PORT', 8080))
 
 if __name__ == "__main__":
-  run(host='0.0.0.0', port=port, debug=True, server='gunicorn', workers=8)
+  try:
+    try:
+      run(host='0.0.0.0', port=port, debug=True, server='gunicorn', workers=8)
+    except ImportError:
+      run(host='0.0.0.0', port=port, debug=True)
+  except Exception as e:
+    logger.error(e)
+    sys.stdin.readline()
 
 app = default_app()
