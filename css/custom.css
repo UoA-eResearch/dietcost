@@ -21,6 +21,10 @@ input {
   color: #26a69a !important;
 }
 
+#var_price .input-field {
+  height: 50px;
+}
+
 .slider {
   width: 90%;
   text-align: center;

@@ -139,6 +139,51 @@ $(document).ready(function() {
       }
     });
   });
+  $.get('get_var_price', function(data) {
+    var html = "";
+    console.log(data);
+    var icons = {
+      "discount": "loyalty",
+      "urban": "business",
+      "season": "today",
+      "deprivation": "trending_down",
+      "population group": "perm_identity",
+      "outlet type": "label",
+      "type": "polymer",
+      "region": "my_location"
+    }
+    var keys = Object.keys(data).sort()
+    for (var i in keys) {
+      var name = keys[i];
+      var options = data[name];
+      html += "<div class='input-field row'>";
+      var icon = icons[name] || "stars";
+      html += "<i class='material-icons prefix'>" + icon + "</i>";
+      if (options[0] === true || options[0] === false) {
+        var checked = "", disabled = "";
+        if (options.length == 1) {
+          if (options[0]) {
+            checked = 'checked ';
+          }
+          disabled = 'disabled ';
+        }
+        html += "<input id='vp_" + name + "' name='vp_" + name + "' type='checkbox' " + checked + disabled + "</input><label for='vp_" + name + "'>" + name + "</label>";
+      } else {
+        html += "<select id='vp_" + name + "' name='vp_" + name + "'>";
+        for (var j in options) {
+          var text = options[j];
+          html += "<option>" + text + "</option>";
+        }
+        html += "</select><label>" + name + "</label>";
+      }
+      html += "</div>";
+    }
+    $("#var_price").append(html);
+    $('select').material_select();
+  });
+  $("#var_price_enabled").click(function() {
+    $("#var_price").toggle();
+  });
   $.get('get_food_group_targets', function(data) {
     console.log(data);
     window.foodGroupTargets = data;
