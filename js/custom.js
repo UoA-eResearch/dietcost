@@ -79,7 +79,9 @@ $(document).ready(function() {
       var fields = data[person];
       if (person == 'adult man') {
         selected = 'selected';
-        $.each(fields, function(name, defaults) {
+        var fields_sorted = Object.keys(fields).sort()
+        $.each(fields_sorted, function(i, name) {
+          var defaults = fields[name];
           var machine_name = name.replace(/[ %*]+/g, '_');
           var display_name = name.charAt(0).toUpperCase() + name.slice(1);
           if (name == 'CHO % energy') {
@@ -140,7 +142,9 @@ $(document).ready(function() {
   $.get('get_food_group_targets', function(data) {
     console.log(data);
     window.foodGroupTargets = data;
-    $.each(data, function(name, constraints) {
+    var data_sorted = Object.keys(data).sort()
+    $.each(data_sorted, function(i, name) {
+      var constraints = data[name];
       if (!constraints['constraints_serves']) return;
       var machine_name = name.replace(/[ %*&]+/g, '_');
       var display_name = name.charAt(0).toUpperCase() + name.slice(1) + ' serves';
