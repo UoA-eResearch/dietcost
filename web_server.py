@@ -50,18 +50,7 @@ def get_food_group_targets():
 
 @get('/get_var_price')
 def get_variable_price_options():
-  unique_set = {}
-  for food in meal_planner.foods:
-    vp = meal_planner.foods[food]['variable prices']
-    for entry in vp:
-      for v in entry:
-        if v == 'price':
-          continue
-        if not v in unique_set:
-          unique_set[v] = []
-        if not entry[v] in unique_set[v]:
-          unique_set[v].append(entry[v])
-  return unique_set
+  return meal_planner.variable_prices
 
 port = int(os.environ.get('PORT', 8080))
 

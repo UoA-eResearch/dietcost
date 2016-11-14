@@ -11,6 +11,7 @@ import logging
 import os
 import csv
 import sys
+import itertools
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger('meal_planner')
@@ -277,8 +278,27 @@ for row in variableFoodPricesSheet:
     'season': row['season'],
     'type': row['type'],
     'urban': row['urban'] == 'yes',
-    'price': row['price/100g']
+    'price/100g': row['price/100g']
   })
+
+variable_prices = {}
+for food in foods:
+  vp = foods[food]['variable prices']
+  for entry in vp:
+    for v in entry:
+      if v == 'price/100g':
+        continue
+      if not v in variable_prices:
+        variable_prices[v] = []
+      if not entry[v] in variable_prices[v]:
+        variable_prices[v].append(entry[v])
+
+for entry in variable_prices:
+  variable_prices[entry].sort()
+
+vp_keys = sorted(variable_prices.keys())
+vp_values = [variable_prices[k] for k in vp_keys]
+vp_combos = list(itertools.product(*vp_values))
 
 e = time.time()
 logger.debug('load done, took {}s'.format(e-s))
@@ -406,19 +426,13 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       if h in meal_plans:
         logger.debug('Already recorded {}'.format(h))
       else:
-        total_price = 0
-        varieties = []
-        amounts = []
-        per_group = dict([(x,{'amount': 0, 'price': 0, 'serves': 0}) for x in food_groups])
+        # Check food group serve targets
+        per_group = dict([(x,{'amount': 0, 'price': 0, 'serves': 0, 'variable prices': {}}) for x in food_groups])
+
         for item, amount in meal.items():
-          price = foods[item]['price/100g'] / 100 * amount
-          total_price += price
-          varieties.append(foods[item]['Variety'])
-          amounts.append(amount)
           fg = foods[item]['Food group']
-          per_group[fg]['amount'] += amount
           per_group[fg]['serves'] += amount / foods[item]['serve size']
-          per_group[fg]['price'] += price
+
         off_food_groups = []
         for fg in per_group:
           if fg in selected_person_food_group_serve_targets:
@@ -429,8 +443,44 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         if off_food_groups:
           target_fg = random.choice(off_food_groups)
         else:
+          # Passed both nutritional check and fg serve check, lets do some compute heavy stuff
+
+          vp_dict = {}
+          total_price = 0
+          varieties = []
+          amounts = []
+          for item, amount in meal.items():
+            price = foods[item]['price/100g'] / 100 * amount
+            total_price += price
+            varieties.append(foods[item]['Variety'])
+            amounts.append(amount)
+
+            fg = foods[item]['Food group']
+            per_group[fg]['amount'] += amount
+            per_group[fg]['price'] += price
+
+            for scenario in vp_combos:
+              vp_id = '_'.join([str(v) for v in scenario])
+              match = None
+              for row in foods[item]['variable prices']:
+                row_id = tuple([row[k] for k in vp_keys])
+                if scenario == row_id:
+                  match = row['price/100g'] / 100 * amount
+              if not match:
+                match = price
+              if vp_id not in vp_dict:
+                vp_dict[vp_id] = 0
+              vp_dict[vp_id] += match
+              if vp_id not in per_group[fg]['variable prices']:
+                per_group[fg]['variable prices'][vp_id] = 0
+              per_group[fg]['variable prices'][vp_id] += match
+
+          vp_dict = dict([(k,v) for k,v in vp_dict.items() if v != total_price])
+          for fg in per_group:
+            per_group[fg]['variable prices'] = dict([(k,v) for k,v in per_group[fg]['variable prices'].items() if v != per_group[fg]['price']])
+
           variety = np.average(varieties, weights=amounts)
-          meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'nutrition': nutrients, 'variety': variety, 'per_group': per_group}
+          meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variable prices': vp_dict, 'nutrition': nutrients, 'variety': variety, 'per_group': per_group}
           logger.debug('Hit!')
     else:
       off_measures = []
