@@ -190,6 +190,7 @@ $(document).ready(function() {
   });
   function display_variable_prices() {
     var runs = Object.keys(window.past_runs);
+    if (!runs.length) return;
     var last_run = window.past_runs[runs[runs.length - 1]];
     if ($("#var_price_enabled").is(":checked")) {
       var scenario = {}
@@ -223,10 +224,16 @@ $(document).ready(function() {
       console.log(vp);
       if (vp) {
         $("#summary #price").text(round(vp.mean));
+        for (var h in last_run.meal_plans) {
+          $("#" + h + " .price").text(round(last_run.meal_plans[h]['variable prices'][vp_id]));
+        }
         return;
       }
     }
     $("#summary #price").text(round(last_run.stats.price.mean));
+    for (var h in last_run.meal_plans) {
+      $("#" + h + " .price").text(round(last_run.meal_plans[h]['price']));
+    }
   }
   $("#var_price_enabled").click(function() {
     $("#var_price").toggle();
@@ -425,7 +432,7 @@ $(document).ready(function() {
           var table = "<table class='highlight bordered'><thead><tr><th data-field='name'>Name</th><th data-field='amount'>Amount</th></tr></thead><tbody>" + items + "</tbody></table>";
           var collapsibleTable = "<ul class='collapsible' data-collapsible='accordion'><li><div class='collapsible-header'><i class='material-icons'>receipt</i>Items</div><div class='collapsible-body'>" + table + "</div></li></ul>";
           var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
-          var summary = "<p class='price'>Price: $" + round(o.price) + "</p><p class='variety'>Variety: " + round(o.variety) + "</p>";
+          var summary = "<p class='priceWrapper'>Price: $<span class='price'>" + round(o.price) + "</span></p><p class='variety'>Variety: " + round(o.variety) + "</p>";
           var card = "<div id='" + hash + "' class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'>" + foodGroupTable + "<br>" + summary + "</div></div></div>";
           $('#meal_plans').append(card);
         }
@@ -436,6 +443,7 @@ $(document).ready(function() {
         }
         summary += "<a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv' download><i class='material-icons left'>play_for_work</i>Download as csv</a>";
         $('#summary').html(summary);
+        display_variable_prices()
       }
     });
   }
