@@ -185,6 +185,7 @@ $(document).ready(function() {
       }
       html += "</div>";
     }
+    html += "<div class='helpWrapper row'><i class='material-icons prefix'>live_help</i><span class='help card-panel'></span></div>";
     $("#var_price").append(html);
     $('select').material_select();
     $("#var_price input,select").change(function() {
@@ -226,6 +227,8 @@ $(document).ready(function() {
       var vp = last_run.stats.variable_prices[vp_id];
       console.log(vp);
       if (vp) {
+        $("#var_price .help").text("Combination effects price");
+        $("#var_price .help").addClass('success');
         $("#summary #price").text(round(vp.mean));
         for (var h in last_run.meal_plans) {
           $("#" + h + " .totalPrice").text(round(last_run.meal_plans[h]['variable prices'][vp_id]));
@@ -242,6 +245,9 @@ $(document).ready(function() {
           }
         }
         return;
+      } else {
+        $("#var_price .help").text("No data for this combination");
+        $("#var_price .help").removeClass('success');
       }
     }
     $("#summary #price").text(round(last_run.stats.price.mean));

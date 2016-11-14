@@ -550,6 +550,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   logger.debug('last meal: {}\nnutritional diff: {}\nnutrients: {}'.format(pprint.pformat(meal), pprint.pformat(diff), pprint.pformat(nutrients)))
 
+  # Calculate statistics
   prices = [m['price'] for h,m in meal_plans.items()]
   varieties = [m['variety'] for h,m in meal_plans.items()]
   stats = {'total_meal_plans': len(meal_plans)}
@@ -623,6 +624,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   logger.info('iterations done, took {}s'.format(e-s))
   logger.debug('Matched meals: {}'.format(pprint.pformat(meal_plans)))
   logger.info('{} matched meals'.format(len(meal_plans)))
+
+  # Write to csv
   s = time.time()
   dt = str(datetime.datetime.now()).replace(':', '_')
   filename = 'csvs/{}.csv'.format(dt)

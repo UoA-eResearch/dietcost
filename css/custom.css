@@ -17,12 +17,21 @@ input {
   text-align: center;
 }
 
-.input-field i {
+i {
   color: #26a69a !important;
 }
 
 #var_price .input-field {
   height: 50px;
+}
+
+#var_price .help {
+  margin-left: 2rem;
+  background-color: #ffcdd2;
+}
+
+#var_price .help.success {
+  background-color: #dcedc8;
 }
 
 .slider {
