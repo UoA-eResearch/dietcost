@@ -272,12 +272,12 @@ for row in variableFoodPricesSheet:
   foods[name]['variable prices'].append({
     'outlet type': row['outlet type'],
     'region': row['region'],
-    'deprivation': row['deprivation'],
-    'discount': row['deprivation'] == 'yes',
+    'deprivation': int(row['deprivation']),
+    'discount': 'discount' if row['discount'] == 'yes' else 'non-discount',
     'population group': row['population group'],
     'season': row['season'],
     'type': row['type'],
-    'urban': row['urban'] == 'yes',
+    'urban': 'urban' if row['urban'] == 'yes' else 'rural',
     'price/100g': row['price/100g']
   })
 
@@ -546,8 +546,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       meal[food] = new_val
 
   logger.debug('last meal: {}\nnutritional diff: {}\nnutrients: {}'.format(pprint.pformat(meal), pprint.pformat(diff), pprint.pformat(nutrients)))
-  
+
   prices = [m['price'] for h,m in meal_plans.items()]
+  vp_keys_sorted = sorted(vp_dict.keys())
   varieties = [m['variety'] for h,m in meal_plans.items()]
   stats = {'total_meal_plans': len(meal_plans)}
   if prices and varieties:
@@ -565,8 +566,17 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       },
       'total_meal_plans': len(meal_plans),
       'per_group': {},
-      'nutrition': {}
+      'nutrition': {},
+      'variable_prices': {}
     }
+    for vp in vp_keys_sorted:
+      vp_all = [m['variable prices'][vp] for h,m in meal_plans.items()]
+      stats['variable_prices'][vp] = {
+        'min': min(vp_all),
+        'max': max(vp_all),
+        'mean': sum(vp_all) / len(vp_all),
+        'std': np.std(vp_all),
+      }
     for g in food_groups:
       prices = [m['per_group'][g]['price'] for h,m in meal_plans.items()]
       serves = [m['per_group'][g]['serves'] for h,m in meal_plans.items()]
@@ -586,8 +596,19 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           'min': min(amount),
           'max': max(amount),
           'mean': sum(amount) / len(amount)
-        }
+        },
+        'variable_prices': {}
       }
+      for vp in vp_keys_sorted:
+        if vp not in m['per_group'][g]['variable prices']:
+          continue
+        vp_all = [m['per_group'][g]['variable prices'][vp] for h,m in meal_plans.items()]
+        stats['per_group'][g]['variable_prices'][vp] = {
+          'min': min(vp_all),
+          'max': max(vp_all),
+          'mean': sum(vp_all) / len(vp_all),
+          'std': np.std(vp_all),
+        }
     for k,v in targetmap.items():
       values = [m['nutrition'][k] for h,m in meal_plans.items()]
       stats['nutrition'][v] = {
@@ -614,9 +635,23 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     writer.writerow([])
     writer.writerow(["Results"])
     keys = sorted(meal.keys())
-    writer.writerow(["unique id", "price", "variety"] + keys + [x + ' ' + y for x in food_groups for y in ['amount', 'price', 'serves']] + [v for k,v in targetmap.items()])
+    writer.writerow(
+      ["unique id", "price", "variety"] +
+      keys +
+      [x + ' ' + y for x in food_groups for y in ['amount', 'price', 'serves']] +
+      [v for k,v in targetmap.items()] +
+      [k + ' price' for k in vp_keys_sorted] +
+      [x + ' ' + y + ' price' for x in food_groups for y in vp_keys_sorted]
+    )
     for h,m in meal_plans.items():
-      writer.writerow([h, m['price'], m['variety']] + [m['meal'][k] for k in keys] + [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']] + [m['nutrition'][k] for k,v in targetmap.items()])
+      writer.writerow(
+        [h, m['price'], m['variety']] +
+        [m['meal'][k] for k in keys] +
+        [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']] +
+        [m['nutrition'][k] for k,v in targetmap.items()] +
+        [m['variable prices'][k] for k in vp_keys_sorted] +
+        [m['per_group'][x]['variable prices'].get(y, m['per_group'][x]['price']) for x in food_groups for y in vp_keys_sorted]
+      )
   e = time.time()
   logger.debug('write done, took {}s'.format(e-s))
   inputs = {'person': person, 'nutrient_targets': selected_person_nutrient_targets, 'iteration_limit': iteration_limit, 'min_serve_size_difference': min_serve_size_difference, 'allowed_varieties': allowed_varieties, 'allow_takeaways': allow_takeaways, 'selected_person_food_group_serve_targets': selected_person_food_group_serve_targets}

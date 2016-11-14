@@ -159,17 +159,21 @@ $(document).ready(function() {
       html += "<div class='input-field row'>";
       var icon = icons[name] || "stars";
       html += "<i class='material-icons prefix'>" + icon + "</i>";
-      if (options[0] === true || options[0] === false) {
+      if (name == 'urban' || name == 'discount') {
         var checked = "", disabled = "";
         if (options.length == 1) {
-          if (options[0]) {
+          if (options[0] == 'urban' || options[0] == 'discount') {
             checked = 'checked ';
           }
           disabled = 'disabled ';
         }
-        html += "<input id='vp_" + name + "' name='vp_" + name + "' type='checkbox' " + checked + disabled + "</input><label for='vp_" + name + "'>" + name + "</label>";
+        html += "<input id='vp_" + name + "' type='checkbox' " + checked + disabled + "</input><label for='vp_" + name + "'>" + name + "</label>";
       } else {
-        html += "<select id='vp_" + name + "' name='vp_" + name + "'>";
+        var disabled = "";
+        if (options.length == 1) {
+          disabled = "disabled ";
+        }
+        html += "<select id='vp_" + name + "' " + disabled + ">";
         for (var j in options) {
           var text = options[j];
           html += "<option>" + text + "</option>";
@@ -180,9 +184,53 @@ $(document).ready(function() {
     }
     $("#var_price").append(html);
     $('select').material_select();
+    $("#var_price input,select").change(function() {
+      display_variable_prices();
+    });
   });
+  function display_variable_prices() {
+    var runs = Object.keys(window.past_runs);
+    var last_run = window.past_runs[runs[runs.length - 1]];
+    if ($("#var_price_enabled").is(":checked")) {
+      var scenario = {}
+      $("#var_price :input").each(function(i, e) {
+        if (e.id) {
+          var v = $(e).val();
+          if (e.id == 'vp_discount') {
+            if ($(e).prop('checked')) {
+              v = 'discount';
+            } else {
+              v = 'non-discount';
+            }
+          } else if (e.id == 'vp_urban') {
+            if ($(e).prop('checked')) {
+              v = 'urban';
+            } else {
+              v = 'rural';
+            }
+          }
+          scenario[e.id] = v;
+        }
+      });
+      var keys = Object.keys(scenario).sort();
+      var vp_id = scenario[keys[0]];
+      for (var i = 1; i < keys.length; i++) {
+        var k = keys[i];
+        vp_id += '_' + scenario[k];
+      }
+      console.log(vp_id);
+      var vp = last_run.stats.variable_prices[vp_id];
+      console.log(vp);
+      if (vp) {
+        $("#summary #price").text(round(vp.mean));
+        return;
+      }
+    }
+    $("#summary #price").text(round(last_run.stats.price.mean));
+  }
   $("#var_price_enabled").click(function() {
     $("#var_price").toggle();
+    display_variable_prices();
   });
   $.get('get_food_group_targets', function(data) {
     console.log(data);
@@ -384,7 +432,7 @@ $(document).ready(function() {
         $('.collapsible').collapsible();
         var summary = "Total meal plans: " + data.stats.total_meal_plans + ". ";
         if (data.stats.total_meal_plans) {
-          summary += "Average price: $" + round(data.stats.price.mean) + ". Average variety: " + round(data.stats.variety.mean) + ". ";
+          summary += "Average price: $<span id='price'>" + round(data.stats.price.mean) + "</span>. Average variety: " + round(data.stats.variety.mean) + ". ";
         }
         summary += "<a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv' download><i class='material-icons left'>play_for_work</i>Download as csv</a>";
         $('#summary').html(summary);
