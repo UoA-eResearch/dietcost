@@ -369,7 +369,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   meal = {}
   meal_plans = {}
-  vp_dict = {}
+  vp_keys_effecting = set()
   
   if not selected_person_nutrient_targets:
     # per day
@@ -477,8 +477,10 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
               per_group[fg]['variable prices'][vp_id] += match
 
           vp_dict = dict([(k,v) for k,v in vp_dict.items() if v != total_price])
+          vp_keys_effecting.update(vp_dict.keys())
           for fg in per_group:
             per_group[fg]['variable prices'] = dict([(k,v) for k,v in per_group[fg]['variable prices'].items() if v != per_group[fg]['price']])
+            vp_keys_effecting.update(per_group[fg]['variable prices'].keys())
 
           variety = np.average(varieties, weights=amounts)
           meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variable prices': vp_dict, 'nutrition': nutrients, 'variety': variety, 'per_group': per_group}
@@ -549,7 +551,6 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   logger.debug('last meal: {}\nnutritional diff: {}\nnutrients: {}'.format(pprint.pformat(meal), pprint.pformat(diff), pprint.pformat(nutrients)))
 
   prices = [m['price'] for h,m in meal_plans.items()]
-  vp_keys_sorted = sorted(vp_dict.keys())
   varieties = [m['variety'] for h,m in meal_plans.items()]
   stats = {'total_meal_plans': len(meal_plans)}
   if prices and varieties:
@@ -570,7 +571,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       'nutrition': {},
       'variable_prices': {}
     }
-    for vp in vp_keys_sorted:
+    for vp in vp_keys_effecting:
       vp_all = [m['variable prices'][vp] for h,m in meal_plans.items()]
       stats['variable_prices'][vp] = {
         'min': min(vp_all),
@@ -600,7 +601,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         },
         'variable_prices': {}
       }
-      for vp in vp_keys_sorted:
+      for vp in vp_keys_effecting:
         if vp not in m['per_group'][g]['variable prices']:
           continue
         vp_all = [m['per_group'][g]['variable prices'][vp] for h,m in meal_plans.items()]
@@ -641,8 +642,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       keys +
       [x + ' ' + y for x in food_groups for y in ['amount', 'price', 'serves']] +
       [v for k,v in targetmap.items()] +
-      [k + ' price' for k in vp_keys_sorted] +
-      [x + ' ' + y + ' price' for x in food_groups for y in vp_keys_sorted]
+      [k + ' price' for k in vp_keys_effecting] +
+      [x + ' ' + y + ' price' for x in food_groups for y in vp_keys_effecting]
     )
     for h,m in meal_plans.items():
       writer.writerow(
@@ -650,8 +651,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         [m['meal'][k] for k in keys] +
         [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']] +
         [m['nutrition'][k] for k,v in targetmap.items()] +
-        [m['variable prices'][k] for k in vp_keys_sorted] +
-        [m['per_group'][x]['variable prices'].get(y, m['per_group'][x]['price']) for x in food_groups for y in vp_keys_sorted]
+        [m['variable prices'][k] for k in vp_keys_effecting] +
+        [m['per_group'][x]['variable prices'].get(y, m['per_group'][x]['price']) for x in food_groups for y in vp_keys_effecting]
       )
   e = time.time()
   logger.debug('write done, took {}s'.format(e-s))
