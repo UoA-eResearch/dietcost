@@ -2,6 +2,9 @@ $(document).ready(function() {
   function round(float) {
     return Math.round(float * 100) / 100;
   }
+  function get_machine_name(name) {
+    return name.replace(/[ %*&]+/g, '_');
+  }
   function validate(min, max) {
     min = parseFloat(min);
     max = parseFloat(max);
@@ -82,7 +85,7 @@ $(document).ready(function() {
         var fields_sorted = Object.keys(fields).sort()
         $.each(fields_sorted, function(i, name) {
           var defaults = fields[name];
-          var machine_name = name.replace(/[ %*]+/g, '_');
+          var machine_name = get_machine_name(name)
           var display_name = name.charAt(0).toUpperCase() + name.slice(1);
           if (name == 'CHO % energy') {
             display_name = 'Carbohydrates % energy';
@@ -112,7 +115,7 @@ $(document).ready(function() {
           console.error("No " + name + " nutritional constraint defined for " + p + "!");
           continue;
         }
-        var machine_name = name.replace(/[ %*]+/g, '_');
+        var machine_name = get_machine_name(name);
         $("#dynamic_fields #" + machine_name + " input.min").val(round(defaults.min));
         $("#dynamic_fields #" + machine_name + " input.max").val(round(defaults.max));
         $("#dynamic_fields #" + machine_name + " input.min").trigger('keyup');
@@ -123,7 +126,7 @@ $(document).ready(function() {
       }
       for (var name in window.foodGroupTargets) {
         if (!window.foodGroupTargets[name]['constraints_serves']) continue;
-        var machine_name = name.replace(/[ %*&]+/g, '_');
+        var machine_name = get_machine_name(name);
         var defaults = window.foodGroupTargets[name]['constraints_serves'][p];
         if (!defaults) {
           console.error("No " + name + " food group serves constraint defined for " + p + "!");
@@ -225,14 +228,30 @@ $(document).ready(function() {
       if (vp) {
         $("#summary #price").text(round(vp.mean));
         for (var h in last_run.meal_plans) {
-          $("#" + h + " .price").text(round(last_run.meal_plans[h]['variable prices'][vp_id]));
+          $("#" + h + " .totalPrice").text(round(last_run.meal_plans[h]['variable prices'][vp_id]));
+          for (var g in last_run.meal_plans[h]['per_group']) {
+            var machine_name = get_machine_name(g);
+            try {
+              var p = round(last_run.meal_plans[h]['per_group'][g]['variable prices'][vp_id]['price']);
+              if (p) {
+                $("#" + h + " tr." + machine_name + " .price").text(p);
+              }
+            } catch(e) {
+              console.error(h, g, vp_id, e);
+            }
+          }
         }
         return;
       }
     }
     $("#summary #price").text(round(last_run.stats.price.mean));
     for (var h in last_run.meal_plans) {
-      $("#" + h + " .price").text(round(last_run.meal_plans[h]['price']));
+      $("#" + h + " .totalPrice").text(round(last_run.meal_plans[h]['price']));
+      for (var g in last_run.meal_plans[h]['per_group']) {
+        var machine_name = get_machine_name(g);
+        var p = round(last_run.meal_plans[h]['per_group'][g]['price']);
+        $("#" + h + " tr." + machine_name + " .price").text(p);
+      }
     }
   }
   $("#var_price_enabled").click(function() {
@@ -246,7 +265,7 @@ $(document).ready(function() {
     $.each(data_sorted, function(i, name) {
       var constraints = data[name];
       if (!constraints['constraints_serves']) return;
-      var machine_name = name.replace(/[ %*&]+/g, '_');
+      var machine_name = get_machine_name(name);
       var display_name = name.charAt(0).toUpperCase() + name.slice(1) + ' serves';
       var defaults = constraints['constraints_serves']['adult man'];
       if (!defaults) {
@@ -427,12 +446,12 @@ $(document).ready(function() {
           for (var i in keys) {
             var k = keys[i];
             var d = o.per_group[k];
-            fgSum += "<tr><td>" + k + "</td><td>" + round(d['amount']) + "g</td><td>$" + round(d['price']) + "</td><td>" + round(d['serves']) + "</td></tr>";
+            fgSum += "<tr class='" + get_machine_name(k) + "'><td>" + k + "</td><td>" + round(d['amount']) + "g</td><td>$<span class='price'>" + round(d['price']) + "</span></td><td>" + round(d['serves']) + "</td></tr>";
           }
           var table = "<table class='highlight bordered'><thead><tr><th data-field='name'>Name</th><th data-field='amount'>Amount</th></tr></thead><tbody>" + items + "</tbody></table>";
           var collapsibleTable = "<ul class='collapsible' data-collapsible='accordion'><li><div class='collapsible-header'><i class='material-icons'>receipt</i>Items</div><div class='collapsible-body'>" + table + "</div></li></ul>";
           var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
-          var summary = "<p class='priceWrapper'>Price: $<span class='price'>" + round(o.price) + "</span></p><p class='variety'>Variety: " + round(o.variety) + "</p>";
+          var summary = "<p class='priceWrapper'>Price: $<span class='totalPrice'>" + round(o.price) + "</span></p><p class='variety'>Variety: " + round(o.variety) + "</p>";
           var card = "<div id='" + hash + "' class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'>" + foodGroupTable + "<br>" + summary + "</div></div></div>";
           $('#meal_plans').append(card);
         }
