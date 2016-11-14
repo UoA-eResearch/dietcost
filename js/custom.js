@@ -232,7 +232,7 @@ $(document).ready(function() {
           for (var g in last_run.meal_plans[h]['per_group']) {
             var machine_name = get_machine_name(g);
             try {
-              var p = round(last_run.meal_plans[h]['per_group'][g]['variable prices'][vp_id]['price']);
+              var p = round(last_run.meal_plans[h]['per_group'][g]['variable prices'][vp_id]);
               if (p) {
                 $("#" + h + " tr." + machine_name + " .price").text(p);
               }
