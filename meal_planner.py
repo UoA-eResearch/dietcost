@@ -297,6 +297,7 @@ for entry in variable_prices:
   variable_prices[entry].sort()
 
 vp_keys = sorted(variable_prices.keys())
+vp_dict = {}
 vp_values = [variable_prices[k] for k in vp_keys]
 vp_combos = list(itertools.product(*vp_values))
 
