@@ -571,16 +571,39 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       'total_meal_plans': len(meal_plans),
       'per_group': {},
       'nutrition': {},
-      'variable_prices': {}
+      'variable_prices': {},
+      'variable_prices_by_var': dict([(k, {}) for k in vp_keys])
     }
     for vp in vp_keys_effecting:
       vp_all = [m['variable prices'][vp] for h,m in meal_plans.items()]
+      vp_min = min(vp_all)
+      vp_max = max(vp_all)
+      vp_mean = sum(vp_all) / len(vp_all)
+      vp_std = np.std(vp_all)
       stats['variable_prices'][vp] = {
-        'min': min(vp_all),
-        'max': max(vp_all),
-        'mean': sum(vp_all) / len(vp_all),
-        'std': np.std(vp_all),
+        'min': vp_min,
+        'max': vp_max,
+        'mean': vp_mean,
+        'std': vp_std,
       }
+      for k in vp_keys:
+        for v in variable_prices[k]:
+          test = str(v)
+          if test == 'discount':
+            test = '_discount'
+          if test in vp:
+            if v not in stats['variable_prices_by_var'][k]:
+              stats['variable_prices_by_var'][k][v] = {
+                'min': vp_min,
+                'max': vp_max,
+                'mean': vp_mean,
+                'std': vp_std
+              }
+            else:
+              stats['variable_prices_by_var'][k][v]['min'] = (stats['variable_prices_by_var'][k][v]['min'] + vp_min) / 2
+              stats['variable_prices_by_var'][k][v]['max'] = (stats['variable_prices_by_var'][k][v]['max'] + vp_max) / 2
+              stats['variable_prices_by_var'][k][v]['mean'] = (stats['variable_prices_by_var'][k][v]['mean'] + vp_mean) / 2
+              stats['variable_prices_by_var'][k][v]['std'] = (stats['variable_prices_by_var'][k][v]['std'] + vp_std) / 2
     for g in food_groups:
       prices = [m['per_group'][g]['price'] for h,m in meal_plans.items()]
       serves = [m['per_group'][g]['serves'] for h,m in meal_plans.items()]

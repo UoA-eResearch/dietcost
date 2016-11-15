@@ -333,7 +333,7 @@ $(document).ready(function() {
           combined_stats[p][k]['min'] += s[k]['min'];
           combined_stats[p][k]['max'] += s[k]['max'];
           combined_stats[p][k]['mean'] += s[k]['mean'];
-        } else if (k == 'per_group') {
+        } else if (k == 'per_group' || k == 'variable_prices_by_var') {
           for (var g in s[k]) {
             for (var measure in s[k][g]) {
               if (measure == 'variable_prices') {
@@ -346,6 +346,9 @@ $(document).ready(function() {
                 combined_stats[p][k][g][measure]['min'] += s[k][g][measure]['min'];
                 combined_stats[p][k][g][measure]['max'] += s[k][g][measure]['max'];
                 combined_stats[p][k][g][measure]['mean'] += s[k][g][measure]['mean'];
+                if (s[k][g][measure]['std']) {
+                  combined_stats[p][k][g][measure]['std'] += s[k][g][measure]['std'];
+                }
               }
             }
           }
@@ -381,14 +384,17 @@ $(document).ready(function() {
           combined_stats[k]['min'] += s[k]['min'] / s.count;
           combined_stats[k]['max'] += s[k]['max'] / s.count;
           combined_stats[k]['mean'] += s[k]['mean'] / s.count;
-        } else if (k == 'per_group') {
+        } else if (k == 'per_group' || k == 'variable_prices_by_var') {
           for (var g in s[k]) {
             if (!combined_stats[k][g]) combined_stats[k][g] = {}
             for (var measure in s[k][g]) {
-              if (!combined_stats[k][g][measure]) combined_stats[k][g][measure] = {'min':0, 'max': 0, 'mean': 0}
+              if (!combined_stats[k][g][measure]) combined_stats[k][g][measure] = {'min':0, 'max': 0, 'mean': 0, 'std': 0}
               combined_stats[k][g][measure]['min'] += s[k][g][measure]['min'] / s.count;
               combined_stats[k][g][measure]['max'] += s[k][g][measure]['max'] / s.count;
               combined_stats[k][g][measure]['mean'] += s[k][g][measure]['mean'] / s.count;
+              if (s[k][g][measure]['std']) {
+                combined_stats[k][g][measure]['std'] += s[k][g][measure]['std'] / s.count;
+              }
             }
           }
         } else if (k == 'nutrition') {
@@ -448,14 +454,24 @@ $(document).ready(function() {
       nSum += "<tr><td>" + k + "</td><td>" + round(d['min']) + "</td><td>" + round(d['mean']) + "</td><td>" + round(d['max']) + "</td></tr>";
     }
     
-    var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
-    var nutrientTable = "<h4>Average nutrition</h4><br><table class='highlight bordered'><thead><tr><th>Measure</th><th>Min</th><th>Average</th><th>Max</th></thead>" + nSum + "</table>";
+    var vpvSum = "";
+    
+    for (var k in combined_stats.variable_prices_by_var) {
+      for (var v in combined_stats.variable_prices_by_var[k]) {
+        var d = combined_stats.variable_prices_by_var[k][v];
+        vpvSum += "<tr><td>" + k + ": " + v + "</td><td>$" + round(d['min']) + "</td><td>$" + round(d['mean']) + "</td><td>$" + round(d['max']) + "</td><td>" + round(d['std']) + "</td><tr>";
+      }
+    }
+    
+    var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead><tbody>" + fgSum + "</tbody></table>";
+    var nutrientTable = "<h4>Average nutrition</h4><br><table class='highlight bordered'><thead><tr><th>Measure</th><th>Min</th><th>Average</th><th>Max</th></thead><tbody>" + nSum + "</tbody></table>";
+    var vpvTable = "<h4>Variable price averages</h4><br><table class='highlight bordered'><thead><tr><th>Variable</th><th>Min</th><th>Mean</th><th>Max</th><th>σ</th></tr></thead><tbody>" + vpvSum + "</tbody></table>";
     
     var d = JSON.parse(JSON.stringify(combined_stats));
     if (d.variable_price) d.price = d.variable_price;
     var priceInfo = 'Price range: $' + round(d['price']['min']) + ' - $' + round(d['price']['max']) + ' ($' + round(d['price']['mean']) + ' avg). σ = ' + round(d.price.std) + ', 95% CI range = $' + round(lowerCI) + ' - $' + round(upperCI);
     var varietyInfo = 'Variety range: ' + round(combined_stats['variety']['min']) + '-' + round(combined_stats['variety']['max']) + ' (' + round(combined_stats['variety']['mean']) + ' avg)';
-    var html = "Total combined meal plans: " + combined_stats['total_meal_plans'] + '<br>' + priceInfo + '<br>' + varietyInfo + '<br><br>' + foodGroupTable + "<br><br>" + nutrientTable;
+    var html = "Total combined meal plans: " + combined_stats['total_meal_plans'] + '<br>' + priceInfo + '<br>' + varietyInfo + '<br><br>' + foodGroupTable + "<br><br>" + nutrientTable + "<br><br>" + vpvTable;
     $('#past_runs_stats').html(html);
   }
 
