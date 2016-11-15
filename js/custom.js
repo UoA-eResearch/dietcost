@@ -253,6 +253,7 @@ $(document).ready(function() {
         $("#var_price .help").removeClass('success');
       }
     }
+    if (!last_run.stats.total_meal_plans) return;
     $("#summary #price").text(round(last_run.stats.price.mean));
     for (var h in last_run.meal_plans) {
       $("#" + h + " .totalPrice").text(round(last_run.meal_plans[h]['price']));

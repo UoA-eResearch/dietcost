@@ -175,8 +175,8 @@ for row in foodConstraintsCSheet:
       foods[name]['serve size'] = int(row['_3'])
     except ValueError:
       pass
-  elif row['']:
-    partial = row[''].split()[0]
+  elif row['per week']:
+    partial = row['per week'].split()[0]
     if partial == 'Meat,':
       partial = 'Protein'
     if partial == 'Fats':
@@ -194,6 +194,13 @@ for row in foodConstraintsCSheet:
           food_groups[fg]['constraints_serves'] = c
         else:
           food_groups[fg]['constraints_serves'].update(c)
+
+food_groups['Starchy vegetables']['constraints_serves'].update({
+          'adult man C': {'min': 0, 'max': 100},
+          'adult women C': {'min': 0, 'max': 100},
+          '14 boy C': {'min': 0, 'max': 100},
+          '7 girl C': {'min': 0, 'max': 100}
+})
 
 for row in nutrientsSheet:
   if row['Commonly consumed food ID'] in food_ids:
@@ -627,15 +634,14 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         'variable_prices': {}
       }
       for vp in vp_keys_effecting:
-        if vp not in m['per_group'][g]['variable prices']:
-          continue
-        vp_all = [m['per_group'][g]['variable prices'][vp] for h,m in meal_plans.items()]
-        stats['per_group'][g]['variable_prices'][vp] = {
-          'min': min(vp_all),
-          'max': max(vp_all),
-          'mean': sum(vp_all) / len(vp_all),
-          'std': np.std(vp_all),
-        }
+        vp_all = [m['per_group'][g]['variable prices'][vp] for h,m in meal_plans.items() if vp in m['per_group'][g]['variable prices']]
+        if vp_all:
+          stats['per_group'][g]['variable_prices'][vp] = {
+            'min': min(vp_all),
+            'max': max(vp_all),
+            'mean': sum(vp_all) / len(vp_all),
+            'std': np.std(vp_all),
+          }
     for k,v in targetmap.items():
       values = [m['nutrition'][k] for h,m in meal_plans.items()]
       stats['nutrition'][v] = {
