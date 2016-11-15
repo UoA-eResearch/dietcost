@@ -11,7 +11,6 @@ import logging
 import os
 import csv
 import sys
-import itertools
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger('meal_planner')
@@ -282,6 +281,8 @@ for row in variableFoodPricesSheet:
   })
 
 variable_prices = {}
+vp_combos = set()
+
 for food in foods:
   vp = foods[food]['variable prices']
   for entry in vp:
@@ -292,13 +293,14 @@ for food in foods:
         variable_prices[v] = []
       if not entry[v] in variable_prices[v]:
         variable_prices[v].append(entry[v])
+    vp_id = '_'.join([str(entry[k]) for k in sorted(entry.keys()) if k != 'price/100g'])
+    vp_combos.add(vp_id)
 
 for entry in variable_prices:
   variable_prices[entry].sort()
 
 vp_keys = sorted(variable_prices.keys())
 vp_values = [variable_prices[k] for k in vp_keys]
-vp_combos = list(itertools.product(*vp_values))
 
 e = time.time()
 logger.debug('load done, took {}s'.format(e-s))
@@ -460,12 +462,11 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
             per_group[fg]['amount'] += amount
             per_group[fg]['price'] += price
 
-            for scenario in vp_combos:
-              vp_id = '_'.join([str(v) for v in scenario])
+            for vp_id in vp_combos:
               match = None
               for row in foods[item]['variable prices']:
-                row_id = tuple([row[k] for k in vp_keys])
-                if scenario == row_id:
+                row_id = '_'.join([str(row[k]) for k in vp_keys])
+                if vp_id == row_id:
                   match = row['price/100g'] / 100 * amount
               if not match:
                 match = price
