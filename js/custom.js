@@ -224,6 +224,8 @@ $(document).ready(function() {
         vp_id += '_' + scenario[k];
       }
       console.log(vp_id);
+      window.vp_id = vp_id;
+      if (!last_run.stats.total_meal_plans) return;
       var vp = last_run.stats.variable_prices[vp_id];
       console.log(vp);
       if (vp) {
@@ -244,6 +246,7 @@ $(document).ready(function() {
             }
           }
         }
+        calculate_combined_stats();
         return;
       } else {
         $("#var_price .help").text("No data for this combination");
@@ -259,6 +262,7 @@ $(document).ready(function() {
         $("#" + h + " tr." + machine_name + " .price").text(p);
       }
     }
+    calculate_combined_stats();
   }
   $("#var_price_enabled").click(function() {
     $("#var_price").toggle();
@@ -285,8 +289,8 @@ $(document).ready(function() {
     Materialize.updateTextFields();
   });
   window.past_runs = {};
-  $("#past_runs_content").on('click', '.past_run', function() {
-    $(this).toggleClass('selected');
+
+  function calculate_combined_stats() {
     var selected = $.map($(".past_run.selected"), function(n) {
       return n.id;
     });
@@ -299,6 +303,16 @@ $(document).ready(function() {
       if (!s.total_meal_plans) continue;
       if (!combined_stats[p]) {
         combined_stats[p] = JSON.parse(JSON.stringify(s)); // Deep copy to prevent clobbering
+        if (window.vp_id) {
+          if (combined_stats[p].variable_prices[window.vp_id]) {
+            combined_stats[p].variable_price = combined_stats[p].variable_prices[window.vp_id];
+          }
+          for (var g in s.per_group) {
+            if (combined_stats[p].per_group[g].variable_prices && combined_stats[p].per_group[g].variable_prices[window.vp_id]) {
+              combined_stats[p].per_group[g].variable_price = combined_stats[p].per_group[g].variable_prices[window.vp_id];
+            }
+          }
+        }
         combined_stats[p].count = 1;
         continue;
       }
@@ -310,6 +324,11 @@ $(document).ready(function() {
           combined_stats[p][k]['max'] += s[k]['max'];
           combined_stats[p][k]['mean'] += s[k]['mean'];
           combined_stats[p][k]['std'] += s[k]['std'];
+        } else if (k == 'variable_prices' && combined_stats[p].variable_price) {
+          combined_stats[p].variable_price.min += s[k][window.vp_id].min;
+          combined_stats[p].variable_price.max += s[k][window.vp_id].max;
+          combined_stats[p].variable_price.mean += s[k][window.vp_id].mean;
+          combined_stats[p].variable_price.std += s[k][window.vp_id].std;
         } else if (k == 'variety') {
           combined_stats[p][k]['min'] += s[k]['min'];
           combined_stats[p][k]['max'] += s[k]['max'];
@@ -317,9 +336,17 @@ $(document).ready(function() {
         } else if (k == 'per_group') {
           for (var g in s[k]) {
             for (var measure in s[k][g]) {
-              combined_stats[p][k][g][measure]['min'] += s[k][g][measure]['min'];
-              combined_stats[p][k][g][measure]['max'] += s[k][g][measure]['max'];
-              combined_stats[p][k][g][measure]['mean'] += s[k][g][measure]['mean'];
+              if (measure == 'variable_prices') {
+                if (window.vp_id && s[k][g][measure] && s[k][g][measure][window.vp_id]) {
+                  combined_stats[p][k][g][measure]['min'] += s[k][g][measure][window.vp_id]['min'];
+                  combined_stats[p][k][g][measure]['max'] += s[k][g][measure][window.vp_id]['max'];
+                  combined_stats[p][k][g][measure]['mean'] += s[k][g][measure][window.vp_id]['mean'];
+                }
+              } else {
+                combined_stats[p][k][g][measure]['min'] += s[k][g][measure]['min'];
+                combined_stats[p][k][g][measure]['max'] += s[k][g][measure]['max'];
+                combined_stats[p][k][g][measure]['mean'] += s[k][g][measure]['mean'];
+              }
             }
           }
         } else if (k == 'nutrition') {
@@ -332,8 +359,6 @@ $(document).ready(function() {
       } 
     }
     
-    console.log(combined_stats);
-    
     var people = Object.keys(combined_stats);
     combined_stats.total_meal_plans = 1;
     combined_stats.count = 0;
@@ -345,7 +370,7 @@ $(document).ready(function() {
       combined_stats.count++;
       for (var k in s) {
         if (!combined_stats[k]) combined_stats[k] = {}
-        if (k == 'price') {
+        if (k == 'price' || k == 'variable_price') {
           if (!combined_stats[k]['min']) combined_stats[k] = {'min':0,'max':0,'mean':0, 'std': 0}
           combined_stats[k]['min'] += s[k]['min'] / s.count;
           combined_stats[k]['max'] += s[k]['max'] / s.count;
@@ -391,18 +416,27 @@ $(document).ready(function() {
       combined_stats['nutrition'][n]['max'] /= combined_stats.count;
       combined_stats['nutrition'][n]['mean'] /= combined_stats.count;
     }
-    
-    var moe = 1.96 * combined_stats.price.std / Math.sqrt(combined_stats.total_meal_plans);
-    var lowerCI = combined_stats.price.mean - moe;
-    var upperCI = combined_stats.price.mean + moe;
-    
+
+    if (combined_stats.variable_price) {
+      var moe = 1.96 * combined_stats.variable_price.std / Math.sqrt(combined_stats.total_meal_plans);
+      var lowerCI = combined_stats.variable_price.mean - moe;
+      var upperCI = combined_stats.variable_price.mean + moe;
+    } else {
+      var moe = 1.96 * combined_stats.price.std / Math.sqrt(combined_stats.total_meal_plans);
+      var lowerCI = combined_stats.price.mean - moe;
+      var upperCI = combined_stats.price.mean + moe;
+    }
+
     console.log(combined_stats);
     
+    // Display
+
     var fgSum = "";
     var keys = Object.keys(combined_stats.per_group).sort();
     for (var i in keys) {
       var k = keys[i];
-      var d = combined_stats.per_group[k];
+      var d = JSON.parse(JSON.stringify(combined_stats.per_group[k]));
+      if (d['variable_price']) d['price'] = d['variable_price']
       fgSum += "<tr><td>" + k + "</td><td>" + round(d['amount']['min']) + "g-" + round(d['amount']['max']) + "g (" + round(d['amount']['mean']) + " avg)</td><td>$" + round(d['price']['min']) + "-$" + round(d['price']['max']) + " ($" + round(d['price']['mean']) + " avg)</td><td>" + round(d['serves']['min']) + "-" + round(d['serves']['max']) + " (" + round(d['serves']['mean']) + " avg)</td></tr>";
     }
     
@@ -417,10 +451,17 @@ $(document).ready(function() {
     var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
     var nutrientTable = "<h4>Average nutrition</h4><br><table class='highlight bordered'><thead><tr><th>Measure</th><th>Min</th><th>Average</th><th>Max</th></thead>" + nSum + "</table>";
     
-    var priceInfo = 'Price range: $' + round(combined_stats['price']['min']) + ' - $' + round(combined_stats['price']['max']) + ' ($' + round(combined_stats['price']['mean']) + ' avg). σ = ' + round(combined_stats.price.std) + ', 95% CI range = $' + round(lowerCI) + ' - $' + round(upperCI);
+    var d = JSON.parse(JSON.stringify(combined_stats));
+    if (d.variable_price) d.price = d.variable_price;
+    var priceInfo = 'Price range: $' + round(d['price']['min']) + ' - $' + round(d['price']['max']) + ' ($' + round(d['price']['mean']) + ' avg). σ = ' + round(d.price.std) + ', 95% CI range = $' + round(lowerCI) + ' - $' + round(upperCI);
     var varietyInfo = 'Variety range: ' + round(combined_stats['variety']['min']) + '-' + round(combined_stats['variety']['max']) + ' (' + round(combined_stats['variety']['mean']) + ' avg)';
     var html = "Total combined meal plans: " + combined_stats['total_meal_plans'] + '<br>' + priceInfo + '<br>' + varietyInfo + '<br><br>' + foodGroupTable + "<br><br>" + nutrientTable;
     $('#past_runs_stats').html(html);
+  }
+
+  $("#past_runs_content").on('click', '.past_run', function() {
+    $(this).toggleClass('selected');
+    calculate_combined_stats();
   });
   function get_meal_plans(variables) {
     $('#progress').show();
