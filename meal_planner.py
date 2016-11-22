@@ -168,6 +168,8 @@ for row in foodConstraintsCSheet:
       'adult women C': {'min': float(row['Min per wk_1']) * 2, 'max': float(row['Max per week_1']) * 2 * MAX_SCALE}
     }
     if 'constraints' not in foods[name]:
+      h_defaults = dict([(k.strip(' C'), v) for k,v in c.items()])
+      c.update(h_defaults)
       foods[name]['constraints'] = c
     else:
       foods[name]['constraints'].update(c)
@@ -373,7 +375,7 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False, selected_person_food_group_serve_targets={}):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 20000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False, selected_person_food_group_serve_targets={}):
   s = time.time()
 
   meal = {}
@@ -412,6 +414,10 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     try:
       if details['Variety'] in allowed_varieties:
         if details['Food group'] == 'Takeaway' and not allow_takeaways:
+          continue
+        if details['Food group'] == 'Alcohol' and selected_person_nutrient_targets['Alcohol % energy']['max'] == 0:
+          continue
+        if details['Food group'] == 'Discretionary foods' and selected_person_nutrient_targets['Discretionary foods % energy']['max'] == 0:
           continue
         t = details['constraints'][person]
         r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
