@@ -246,6 +246,7 @@ for row in nutrientsTargetsHSheet:
   n["Discretionary foods % energy"] = {'min': 0, 'max': 0}
   n["Alcohol % energy"] = {'min': 0, 'max': 50}
   n["Total sugars % energy"] = {'min': 0, 'max': 100}
+  n['fibre g']['max'] = n['fibre g']['min'] * 4
   nutrient_targets[p_strip] = n
 
 for row in nutrientsTargetsCSheet:
@@ -702,4 +703,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   return {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
 
 if __name__ == "__main__":
-  get_meal_plans("adult man C")
+  get_meal_plans("adult man")
