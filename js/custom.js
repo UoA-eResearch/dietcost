@@ -3,7 +3,7 @@ $(document).ready(function() {
     return Math.round(float * 100) / 100;
   }
   function get_machine_name(name) {
-    return name.replace(/[ %*&]+/g, '_');
+    return name.replace(/[ %*&()]+/g, '_');
   }
   function validate(min, max) {
     min = parseFloat(min);
