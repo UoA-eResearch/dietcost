@@ -12,7 +12,7 @@ import os
 import csv
 import sys
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger('meal_planner')
 
 try:
@@ -44,7 +44,7 @@ targetmap = {
   'Fibre': 'fibre g',
   'Alcohol % energy': 'Alcohol % energy',
   'Discretionary foods % energy': 'Discretionary foods % energy',
-  'Red meat': 'Red meat g'
+  'Red meat': 'red meat (g)'
 }
 
 reverse_targetmap = dict([(v,k) for k,v in targetmap.items()])
@@ -92,10 +92,10 @@ sheet_names = xl_workbook.sheet_names()
 
 foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
 nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
-nutrientsTargetsSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=0, limit=4)
-nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('Nutrient targets'), header=37, limit=8)
-foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Food constraints H (2)'), header=2)
-foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C (2)'), header=1)
+nutrientsTargetsHSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=14, limit=8)
+nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=24, limit=8)
+foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints H(3)'), header=2)
+foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C (3)'), header=1)
 foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
 variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
 
@@ -149,7 +149,7 @@ for row in foodConstraintsHSheet:
     else:
       isStarchy = False
     for fg in food_groups:
-      if partial in fg:
+      if partial in fg and row['Min per week']:
         food_groups[fg]['constraints_serves'] = {
           'adult man': {'min': row['Min per week'] / 7.0, 'max': row['Max per week'] / 7.0},
           'adult women': {'min': row['Min per week_1'] / 7.0, 'max': row['Max per week_1'] / 7.0},
@@ -158,8 +158,8 @@ for row in foodConstraintsHSheet:
         }
 
 for row in foodConstraintsCSheet:
-  if row['1.0'] in food_ids:
-    name = food_ids[row['1.0']]
+  if row['_2'] in food_ids:
+    name = food_ids[row['_2']]
     # per week
     c = {
       '14 boy C': {'min': float(row['Min per wk_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
@@ -174,7 +174,7 @@ for row in foodConstraintsCSheet:
     else:
       foods[name]['constraints'].update(c)
     try:
-      foods[name]['serve size'] = int(row['_3'])
+      foods[name]['serve size'] = int(row['_4'])
     except ValueError:
       pass
   elif row['per week']:
@@ -184,12 +184,12 @@ for row in foodConstraintsCSheet:
     if partial == 'Fats':
       continue
     for fg in food_groups:
-      if partial in fg:
+      if partial in fg and row['Min per wk']:
         c = {
-          'adult man C': {'min': 0, 'max': 100},
-          'adult women C': {'min': 0, 'max': 100},
-          '14 boy C': {'min': 0, 'max': 100},
-          '7 girl C': {'min': 0, 'max': 100}
+          'adult man C': {'min': row['Min per wk'] / 7.0, 'max': row['Max per week'] / 7.0},
+          'adult women C': {'min': row['Min per wk_1'] / 7.0, 'max': row['Max per week_1'] / 7.0},
+          '14 boy C': {'min': row['Min per wk_2'] / 7.0, 'max': row['Max per week_2'] / 7.0},
+          '7 girl C': {'min': row['Min per wk_3'] / 7.0, 'max': row['Max per week_3'] / 7.0}
         }
         if 'constraints_serves' not in food_groups[fg]:
           continue
@@ -205,63 +205,68 @@ food_groups['Starchy vegetables']['constraints_serves'].update({
 })
 
 for row in nutrientsSheet:
-  if row['Commonly consumed food ID'] in food_ids:
-    floats = {}
-    for k,v, in row.items():
-      try:
-        if k != 'Commonly consumed food ID':
-          floats[k] = float(v)
-      except ValueError:
-        pass
-    name = food_ids[row['Commonly consumed food ID']]
-    foods[name]['nutrition'] = floats
+  fid = row['Common food ID']
+  if fid not in food_ids:
+    logger.debug("nutrition defined, but {} not known!".format(fid))
+    continue
 
-for row in nutrientsTargetsSheet:
-  n = {}
-  for measure, value in row.items():
-    if isinstance(value, basestring):
-      if '-' in value and '%' in value:
-        bits = [float(x) for x in value.strip('% ').split('-')]
-        n[measure] = {'min': bits[0], 'max': bits[1]}
-      elif '<' in value:
-        value = value.strip('<% E')
-        n[measure] = {'min': 0, 'max': float(value)}
-    if measure == 'Energy MJ':
-      n['Energy kJ'] = {'min': (value - (value * 0.015)) * 1000, 'max': (value + (value * 0.015)) * 1000}
-    elif measure == 'sodium mg':
-      n[measure] = {'min': 0, 'max': value}
-    elif measure == 'fibre g':
-      n[measure] = {'min': value - (value*0.015), 'max': value * 2}
-  n["Alcohol % energy"] = {'min': 0, 'max': 50}
-  n["Discretionary foods % energy"] = {'min': 0, 'max': 50}
-  n["Total sugars % energy"] = {'min': 0, 'max': 100}
-  n["Red meat g"] = {'min': 0, 'max': 500/7.0}
-  n.pop("Free sugars % energy*")
-  nutrient_targets[row['Healthy diet per day']] = n
+  floats = {}
+  for k,v, in row.items():
+    try:
+      if k != 'Common food ID':
+        floats[k] = float(v)
+    except ValueError:
+      pass
+  name = food_ids[fid]
+  foods[name]['nutrition'] = floats
 
-for row in nutrientsTargetsCSheet:
-  p = row['Nutrient constraints                      Current diet per day']
-  p_strip = p.replace('aduilt', 'adult').replace(' min', '').replace(' max', '').replace('woman', 'women') + ' C'
+for row in nutrientsTargetsHSheet:
+  p = row['Healthy diet per day']
+  p_strip = p.replace('aduilt', 'adult').replace(' min', '').replace(' max', '').replace('woman', 'women')
+  n = nutrient_targets.get(p_strip, {})
   if 'min' in p:
     minormax = 'min'
   elif 'max' in p:
     minormax = 'max'
-  n = nutrient_targets.get(p_strip, {})
+
   for measure, value in row.items():
-    if measure == 'Total sugars grams' or measure == 'Energy reported from survey':
+    if 'grams' in measure and measure != 'fibre grams' or '(s)' in measure:
       continue
     try:
       f = float(value)
-      if measure == 'Energy MJ CI (calculated from BMI)':
+      if measure == 'Energy MJ':
         measure = 'Energy kJ'
         f *= 1000
-      measure = measure.replace('% E CI', '% energy').replace('%E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('saturated Fat', 'Saturated fat').replace('alcohol', 'Alcohol').replace('Sodium', 'sodium')
+      measure = measure.replace("carb%", "CHO % energy").replace("fat %", "Fat % energy").replace("sat Fat", "Saturated fat").replace("protein %", "protein % energy").replace("grams", "g")
       if measure not in n:
         n[measure] = {}
-      if minormax == 'min':
-        f *= .9
-      else:
-        f *= 1.1
+      n[measure][minormax] = f
+    except ValueError:
+      pass
+  n["Discretionary foods % energy"] = {'min': 0, 'max': 0}
+  n["Alcohol % energy"] = {'min': 0, 'max': 50}
+  n["Total sugars % energy"] = {'min': 0, 'max': 100}
+  nutrient_targets[p_strip] = n
+
+for row in nutrientsTargetsCSheet:
+  p = row['Nutrient constraints                      Current diet per day']
+  p_strip = p.replace('aduilt', 'adult').replace(' min', '').replace(' max', '').replace('woman', 'women') + ' C'
+  n = nutrient_targets.get(p_strip, {})
+  for measure, value in row.items():
+    if 'grams' in measure and measure != 'fibre grams' or '(s)' in measure:
+      continue
+    try:
+      f = float(value)
+      if measure == 'Energy MJ':
+        measure = 'Energy kJ'
+        f *= 1000
+      measure = measure.replace('% E CI', '% energy').replace('%E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('Sat Fat', 'Saturated fat').replace('alcohol', 'Alcohol').replace('Sodium', 'sodium').replace(" +-10%", "").replace("protein %", "protein % energy").replace("Alcohol", "Alcohol % energy").replace("grams", "g").replace('total', 'Total')
+      if measure not in n:
+        n[measure] = {}
+      #if minormax == 'min':
+      #  f *= .9
+      #else:
+      #  f *= 1.1
       n[measure][minormax] = f
     except ValueError:
       pass
@@ -276,6 +281,9 @@ for row in foodPricesSheet:
     pass
 
 for row in variableFoodPricesSheet:
+  if row['Food Id'] not in food_ids:
+    logger.debug("{} has a variable price but is not defined!".format(row['Food Id']))
+    continue
   name = food_ids[row['Food Id']]
   foods[name]['variable prices'].append({
     'outlet type': row['outlet type'],
@@ -353,29 +361,25 @@ def get_diff(nutrients, target):
 
   for k, v in targetmap.items():
     x = nutrients[k]
+    if v not in target:
+      continue
     t = target[v]
     if type(t) is float:
       diff[v] = x - t
     elif type(t) is dict:
-      if 'min' in t and 'max' in t:
-        if x > t['min'] and x < t['max']:
-          diff[v] = 0
-        elif x < t['min']:
-          diff[v] = x - t['min']
-        elif x > t['max']:
-          diff[v] = x - t['max']
-      elif 'max' in t:
-        if x < t['max']:
-          diff[v] = 0
-        else:
-          diff[v] = x - t['max']
+      if 'min' in t and x < t['min']:
+        diff[v] = x - t['min']
+      elif 'max' in t and x > t['max']:
+        diff[v] = x - t['max']
+      else:
+        diff[v] = 0
 
   return diff
 
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
-def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 20000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False, selected_person_food_group_serve_targets={}):
+def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False, selected_person_food_group_serve_targets={}):
   s = time.time()
 
   meal = {}
@@ -393,11 +397,10 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     try:
       # convert to fortnightly
       if '%' not in measure:
-        selected_person_nutrient_targets[measure]['max'] *= 14
-        try:
+        if 'min' in selected_person_nutrient_targets[measure]:
           selected_person_nutrient_targets[measure]['min'] *= 14
-        except KeyError:
-          pass
+        if 'max' in selected_person_nutrient_targets[measure]:
+          selected_person_nutrient_targets[measure]['max'] *= 14
     except TypeError:
       pass
 
@@ -668,8 +671,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   with open(filename, 'w') as f:
     writer = csv.writer(f)
     writer.writerow(["Persona", "min/max"] + list(selected_person_nutrient_targets.keys()) + list(selected_person_food_group_serve_targets.keys()))
-    writer.writerow([person, "min"] + [x['min'] for x in selected_person_nutrient_targets.values()] + [x['min'] for x in selected_person_food_group_serve_targets.values()])
-    writer.writerow([person, "max"] + [x['max'] for x in selected_person_nutrient_targets.values()] + [x['max'] for x in selected_person_food_group_serve_targets.values()])
+    writer.writerow([person, "min"] + [x.get('min') for x in selected_person_nutrient_targets.values()] + [x.get('min') for x in selected_person_food_group_serve_targets.values()])
+    writer.writerow([person, "max"] + [x.get('max') for x in selected_person_nutrient_targets.values()] + [x.get('max') for x in selected_person_food_group_serve_targets.values()])
     writer.writerow([])
     writer.writerow(["Timestamp", "Iteration limit", "Min serve size difference", "Allowed varieties", "Allow takeaways"])
     writer.writerow([dt, iteration_limit, min_serve_size_difference, allowed_varieties, allow_takeaways])
@@ -699,5 +702,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   return {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
 
 if __name__ == "__main__":
-  logger.setLevel(logging.DEBUG)
-  meal_plans = get_meal_plans("adult man")
+  get_meal_plans("adult man C")
