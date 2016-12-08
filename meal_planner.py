@@ -253,6 +253,11 @@ for row in nutrientsTargetsCSheet:
   p = row['Nutrient constraints                      Current diet per day']
   p_strip = p.replace('aduilt', 'adult').replace(' min', '').replace(' max', '').replace('woman', 'women') + ' C'
   n = nutrient_targets.get(p_strip, {})
+  if 'min' in p:
+    minormax = 'min'
+  elif 'max' in p:
+    minormax = 'max'
+
   for measure, value in row.items():
     if 'grams' in measure and measure != 'fibre grams' or '(s)' in measure:
       continue
