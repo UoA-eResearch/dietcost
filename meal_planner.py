@@ -243,7 +243,7 @@ for row in nutrientsTargetsHSheet:
       n[measure][minormax] = f
     except ValueError:
       pass
-  n["Discretionary foods % energy"] = {'min': 0, 'max': 0}
+  n["Discretionary foods % energy"] = {'min': 0, 'max': 100}
   n["Alcohol % energy"] = {'min': 0, 'max': 50}
   n["Total sugars % energy"] = {'min': 0, 'max': 100}
   n['fibre g']['max'] = n['fibre g']['min'] * 4
@@ -431,6 +431,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         t = details['constraints'][person]
         r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
         if len(r) > 0:
+          if details['Food group'] == 'Discretionary foods' and not person.endswith('C'):
+            if random.random() > .4:
+              continue
           meal[food] = random.choice(r)
           combinations *= len(r)
     except KeyError as e:
@@ -708,4 +711,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   return {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
 
 if __name__ == "__main__":
-  get_meal_plans("adult man")
+  get_meal_plans("adult man C")
