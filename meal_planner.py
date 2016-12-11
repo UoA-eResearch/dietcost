@@ -110,7 +110,7 @@ for row in foodsSheet:
 
   foods[name] = row
   foods[name]['variable prices'] = []
-  food_ids[row['Commonly consumed food ID']] = name
+  food_ids[int(row['Commonly consumed food ID'])] = name
   
   if row['Food group'] == ' Discretionary foods':
     row['Food group'] = 'Discretionary foods'
@@ -124,7 +124,7 @@ isStarchy = False
 
 for row in foodConstraintsHSheet:
   if row['Food ID'] in food_ids:
-    name = food_ids[row['Food ID']]
+    name = food_ids[int(row['Food ID'])]
     # per week
     foods[name]['constraints'] = {
       '14 boy': {'min': float(row['Min per week_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
@@ -159,7 +159,7 @@ for row in foodConstraintsHSheet:
 
 for row in foodConstraintsCSheet:
   if row['_2'] in food_ids:
-    name = food_ids[row['_2']]
+    name = food_ids[int(row['_2'])]
     # per week
     c = {
       '14 boy C': {'min': float(row['Min per wk_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
@@ -205,7 +205,7 @@ food_groups['Starchy vegetables']['constraints_serves'].update({
 })
 
 for row in nutrientsSheet:
-  fid = row['Common food ID']
+  fid = int(row['Common food ID'])
   if fid not in food_ids:
     logger.debug("nutrition defined, but {} not known!".format(fid))
     continue
@@ -281,16 +281,22 @@ for row in nutrientsTargetsCSheet:
 
 for row in foodPricesSheet:
   try:
-    name = food_ids[row['Commonly consumed food ID']]
+    name = food_ids[int(row['Commonly consumed food ID'])]
     foods[name]['price/100g'] = row['price/100g AP']
   except KeyError:
-    pass
+    logger.debug("{} has a price but is not defined!".format(row['Commonly consumed food ID']))
+
+for food in foods:
+  if 'price/100g' not in foods[food]:
+    logger.error("No price for {}!".format(food))
+  if 'nutrition' not in foods[food] or len(foods[food]['nutrition']) == 0:
+    logger.error("No nutrition for {}!".format(food))
 
 for row in variableFoodPricesSheet:
-  if row['Food Id'] not in food_ids:
+  if int(row['Food Id']) not in food_ids:
     logger.debug("{} has a variable price but is not defined!".format(row['Food Id']))
     continue
-  name = food_ids[row['Food Id']]
+  name = food_ids[int(row['Food Id'])]
   foods[name]['variable prices'].append({
     'outlet type': row['outlet type'],
     'region': row['region'],
@@ -427,6 +433,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         if details['Food group'] == 'Alcohol' and selected_person_nutrient_targets['Alcohol % energy']['max'] == 0:
           continue
         if details['Food group'] == 'Discretionary foods' and selected_person_nutrient_targets['Discretionary foods % energy']['max'] == 0:
+          continue
+        if 'price/100g' not in details:
           continue
         t = details['constraints'][person]
         r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
