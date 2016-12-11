@@ -7,6 +7,8 @@ import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('web_server')
+mp_log = logging.getLogger('meal_planner')
+mp_log.setLevel(logging.INFO)
 
 @get('/')
 def index():
