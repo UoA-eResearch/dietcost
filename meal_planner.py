@@ -123,7 +123,7 @@ food_groups['Starchy vegetables'] = {}
 isStarchy = False
 
 for row in foodConstraintsHSheet:
-  if row['Food ID'] in food_ids:
+  if row['Food ID'] and int(row['Food ID']) in food_ids:
     name = food_ids[int(row['Food ID'])]
     # per week
     foods[name]['constraints'] = {
@@ -158,7 +158,7 @@ for row in foodConstraintsHSheet:
         }
 
 for row in foodConstraintsCSheet:
-  if row['_2'] in food_ids:
+  if row['_2'] and int(row['_2']) in food_ids:
     name = food_ids[int(row['_2'])]
     # per week
     c = {
@@ -286,11 +286,15 @@ for row in foodPricesSheet:
   except KeyError:
     logger.debug("{} has a price but is not defined!".format(row['Commonly consumed food ID']))
 
+# Sanity check
+
 for food in foods:
   if 'price/100g' not in foods[food]:
     logger.error("No price for {}!".format(food))
   if 'nutrition' not in foods[food] or len(foods[food]['nutrition']) == 0:
     logger.error("No nutrition for {}!".format(food))
+  elif 'Energy kJ/100g' not in foods[food]['nutrition'] or foods[food]['nutrition']['Energy kJ/100g'] == 0:
+    logger.error("{} doesn't have energy".format(food))
 
 for row in variableFoodPricesSheet:
   if int(row['Food Id']) not in food_ids:
@@ -447,6 +451,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     except KeyError as e:
       logger.debug('not including {} due to missing {}'.format(food, e))
 
+  if len(meal) == 0:
+    logger.error("0 items in menu!!!")
   logger.debug('{} items in menu. {} distinct possible menus'.format(len(meal), combinations))
   # Iteratively improve
   
