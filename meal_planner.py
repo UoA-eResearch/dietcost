@@ -431,7 +431,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         t = details['constraints'][person]
         r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
         if len(r) > 0:
-          if details['Food group'] == 'Discretionary foods' and not person.endswith('C'):
+          if (details['Food group'] == 'Discretionary foods' or details['Food group'] == 'Takeaway') and not person.endswith('C'):
             if random.random() > .4:
               continue
           meal[food] = random.choice(r)
