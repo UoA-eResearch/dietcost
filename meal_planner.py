@@ -177,8 +177,15 @@ for row in foodConstraintsCSheet:
       foods[name]['serve size'] = int(row['_4'])
     except ValueError:
       pass
+    if partial != 'Discretionary' and foods[name]['Food group'] == 'Discretionary foods':
+      if partial == 'Grains':
+        fg_header = 'Grains'
+      elif partial == 'starchy':
+        fg_header = 'Starchy vegetables'
+      foods[name]['Food group_C'] = fg_header
   elif row['per week']:
-    partial = row['per week'].split()[0]
+    fg_header = row['per week'].strip()
+    partial = fg_header.split()[0]
     if partial == 'Meat,':
       partial = 'Protein'
     if partial == 'Fats':
@@ -338,9 +345,14 @@ vp_values = [variable_prices[k] for k in vp_keys]
 e = time.time()
 logger.debug('load done, took {}s'.format(e-s))
 
+def get_fg_for_p(details, person):
+  if person.endswith('C') and 'Food group_C' in details:
+    return details['Food group_C']
+  return details['Food group']
+
 # Generate a plan
 
-def get_nutrients(meal):
+def get_nutrients(meal, person = ''):
   nutrients_sum = {'Discretionary foods % energy': 0, 'Alcohol % energy': 0, 'Red meat': 0}
 
   for food, amount in meal.items():
@@ -352,9 +364,9 @@ def get_nutrients(meal):
         nutrients_sum[measure] += value
       else:
         nutrients_sum[measure] = value
-    if foods[food]['Food group'] == 'Alcohol':
+    if get_fg_for_p(foods[food], person) == 'Alcohol':
       nutrients_sum['Alcohol % energy'] += (foods[food]['nutrition']['Energy kJ/100g'] / 100) * amount
-    if foods[food]['Food group'] == 'Discretionary foods':
+    if get_fg_for_p(foods[food], person) == 'Discretionary foods':
       nutrients_sum['Discretionary foods % energy'] += (foods[food]['nutrition']['Energy kJ/100g'] / 100) * amount
     if foods[food]['redmeat']:
       nutrients_sum['Red meat'] += amount
@@ -432,18 +444,18 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   for food, details in foods.items():
     try:
       if details['Variety'] in allowed_varieties:
-        if details['Food group'] == 'Takeaway' and not allow_takeaways:
+        if get_fg_for_p(details, person) == 'Takeaway' and not allow_takeaways:
           continue
-        if details['Food group'] == 'Alcohol' and selected_person_nutrient_targets['Alcohol % energy']['max'] == 0:
+        if get_fg_for_p(details, person) == 'Alcohol' and selected_person_nutrient_targets['Alcohol % energy']['max'] == 0:
           continue
-        if details['Food group'] == 'Discretionary foods' and selected_person_nutrient_targets['Discretionary foods % energy']['max'] == 0:
+        if get_fg_for_p(details, person) == 'Discretionary foods' and selected_person_nutrient_targets['Discretionary foods % energy']['max'] == 0:
           continue
         if 'price/100g' not in details:
           continue
         t = details['constraints'][person]
         r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
         if len(r) > 0:
-          if (details['Food group'] == 'Discretionary foods' or details['Food group'] == 'Takeaway') and not person.endswith('C'):
+          if (get_fg_for_p(details, person) == 'Discretionary foods' or get_fg_for_p(details, person) == 'Takeaway') and not person.endswith('C'):
             if random.random() > .4:
               continue
           meal[food] = random.choice(r)
@@ -457,7 +469,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   # Iteratively improve
   
   for i in range(iteration_limit):
-    nutrients = get_nutrients(meal)
+    nutrients = get_nutrients(meal, person)
     diff = get_diff(nutrients, selected_person_nutrient_targets)
     logger.debug('Iteration: {}'.format(i))
     target_measure = None
@@ -472,7 +484,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         per_group = dict([(x,{'amount': 0, 'price': 0, 'serves': 0, 'variable prices': {}}) for x in food_groups])
 
         for item, amount in meal.items():
-          fg = foods[item]['Food group']
+          fg = get_fg_for_p(foods[item], person)
           per_group[fg]['serves'] += amount / foods[item]['serve size']
 
         off_food_groups = []
@@ -538,10 +550,10 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       for item in meal:
         try:
           if target_measure == 'Alcohol % energy':
-            if foods[item]['Food group'] == 'Alcohol':
+            if get_fg_for_p(foods[item], person) == 'Alcohol':
               foods_that_impact_this_measure.append(item)
           elif target_measure == 'Discretionary foods % energy':
-            if foods[item]['Food group'] == 'Discretionary foods':
+            if get_fg_for_p(foods[item], person) == 'Discretionary foods':
               foods_that_impact_this_measure.append(item)
           elif target_measure == 'Red meat g':
             if foods[item]['redmeat']:
@@ -566,7 +578,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       v = per_group[target_fg]['serves']
       foods_that_impact_this_measure = []
       for item in meal:
-        if foods[item]['Food group'] == target_fg:
+        if get_fg_for_p(foods[item], person) == target_fg:
           foods_that_impact_this_measure.append(item)
       food = random.choice(foods_that_impact_this_measure)
       t = foods[food]['constraints'][person]
