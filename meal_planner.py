@@ -106,7 +106,7 @@ for row in foodsSheet:
   elif row['Food group'] == 'Protein foods: Meat, poultry, seafood, eggs, legumes, nuts':
     row['Food group'] = 'Protein'
 
-  row['redmeat'] = row['Commonly consumed food ID'] in ["05067", "05069", "05073", "05074", "05089"]
+  row['redmeat'] = row['Commonly consumed food ID'] in ["05065", "05067", "05073", "05074", "05089"]
 
   foods[name] = row
   foods[name]['variable prices'] = []
