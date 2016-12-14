@@ -168,8 +168,9 @@ for row in foodConstraintsCSheet:
       'adult women C': {'min': float(row['Min per wk_1']) * 2, 'max': float(row['Max per week_1']) * 2 * MAX_SCALE}
     }
     if 'constraints' not in foods[name]:
-      h_defaults = dict([(k.strip(' C'), v) for k,v in c.items()])
-      c.update(h_defaults)
+      # Uncomment this to default H constraints from C where missing in H
+      # h_defaults = dict([(k.strip(' C'), v) for k,v in c.items()])
+      # c.update(h_defaults)
       foods[name]['constraints'] = c
     else:
       foods[name]['constraints'].update(c)
