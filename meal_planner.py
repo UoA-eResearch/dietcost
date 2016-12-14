@@ -184,6 +184,8 @@ for row in foodConstraintsCSheet:
         fg_header = 'Starchy vegetables'
       elif partial == 'Sauces,':
         fg_header = 'Sauces'
+      elif partial == 'Protein':
+        fg_header = 'Protein'
       foods[name]['Food group_C'] = fg_header
   elif row['per week']:
     fg_header = row['per week'].strip()
