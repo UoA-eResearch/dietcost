@@ -344,6 +344,7 @@ $(document).ready(function() {
                   combined_stats[p][k][g][measure]['mean'] += s[k][g][measure][window.vp_id]['mean'];
                 }
               } else {
+                if (!combined_stats[p][k][g][measure]) combined_stats[p][k][g][measure] = {'min':0, 'max':0, 'mean':0, 'std':0}
                 combined_stats[p][k][g][measure]['min'] += s[k][g][measure]['min'];
                 combined_stats[p][k][g][measure]['max'] += s[k][g][measure]['max'];
                 combined_stats[p][k][g][measure]['mean'] += s[k][g][measure]['mean'];
