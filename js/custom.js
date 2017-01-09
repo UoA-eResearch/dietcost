@@ -401,7 +401,7 @@ $(document).ready(function() {
           }
         } else if (k == 'nutrition') {
           for (var n in s[k]) {
-            if (!combined_stats[k][n]) combined_stats[k][n] = {'min': 0, 'max': 0, 'mean': 0}
+            if (!combined_stats[k][n]) combined_stats[k][n] = {'min': 0, 'max': 0, 'mean': 0, 'std': 0}
             combined_stats[k][n]['min'] += s[k][n]['min'] / s.count;
             combined_stats[k][n]['max'] += s[k][n]['max'] / s.count;
             combined_stats[k][n]['mean'] += s[k][n]['mean'] / s.count;
