@@ -141,6 +141,27 @@ $(document).ready(function() {
         createSlider(slider, name, machine_name, defaults)
       }
     });
+    
+    $.get('get_food_group_targets', function(data) {
+      console.log(data);
+      window.foodGroupTargets = data;
+      var data_sorted = Object.keys(data).sort()
+      $.each(data_sorted, function(i, name) {
+        var constraints = data[name];
+        if (!constraints['constraints_serves']) return;
+        var machine_name = get_machine_name(name);
+        var display_name = name.charAt(0).toUpperCase() + name.slice(1) + ' serves';
+        var defaults = constraints['constraints_serves']['adult man'];
+        if (!defaults) {
+          console.error("No " + name + " defined for adult man!");
+          return;
+        }
+        $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + display_name + '</p><div class="input-field col s2"><input name="fg_' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="fg_' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
+        var slider = $('#' + machine_name + ' div.slider')[0];
+        createSlider(slider, name, machine_name, defaults)
+      });
+      Materialize.updateTextFields();
+    });
   });
   $.get('get_var_price', function(data) {
     var html = "";
@@ -268,26 +289,6 @@ $(document).ready(function() {
   $("#var_price_enabled").click(function() {
     $("#var_price").toggle();
     display_variable_prices();
-  });
-  $.get('get_food_group_targets', function(data) {
-    console.log(data);
-    window.foodGroupTargets = data;
-    var data_sorted = Object.keys(data).sort()
-    $.each(data_sorted, function(i, name) {
-      var constraints = data[name];
-      if (!constraints['constraints_serves']) return;
-      var machine_name = get_machine_name(name);
-      var display_name = name.charAt(0).toUpperCase() + name.slice(1) + ' serves';
-      var defaults = constraints['constraints_serves']['adult man'];
-      if (!defaults) {
-        console.error("No " + name + " defined for adult man!");
-        return;
-      }
-      $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + display_name + '</p><div class="input-field col s2"><input name="fg_' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="fg_' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
-      var slider = $('#' + machine_name + ' div.slider')[0];
-      createSlider(slider, name, machine_name, defaults)
-    });
-    Materialize.updateTextFields();
   });
   window.past_runs = {};
 
