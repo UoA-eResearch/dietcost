@@ -322,32 +322,52 @@ $(document).ready(function() {
       combined_stats[p]['total_meal_plans'] += s.total_meal_plans;
       for (var k in s) {
         if (k == 'price') {
-          combined_stats[p][k]['min'] += s[k]['min'];
-          combined_stats[p][k]['max'] += s[k]['max'];
+          if (s[k]['min'] < combined_stats[p][k]['min']) {
+            combined_stats[p][k]['min'] = s[k]['min'];
+          }
+          if (s[k]['max'] > combined_stats[p][k]['max']) {
+            combined_stats[p][k]['max'] = s[k]['max'];
+          }
           combined_stats[p][k]['mean'] += s[k]['mean'];
           combined_stats[p][k]['std'] += s[k]['std'];
         } else if (k == 'variable_prices' && combined_stats[p].variable_price) {
-          combined_stats[p].variable_price.min += s[k][window.vp_id].min;
-          combined_stats[p].variable_price.max += s[k][window.vp_id].max;
+          if (s[k][window.vp_id].min < combined_stats[p].variable_price.min) {
+            combined_stats[p].variable_price.min = s[k][window.vp_id].min;
+          }
+          if (s[k][window.vp_id].max > combined_stats[p].variable_price.max) {
+            combined_stats[p].variable_price.max = s[k][window.vp_id].max;
+          }
           combined_stats[p].variable_price.mean += s[k][window.vp_id].mean;
           combined_stats[p].variable_price.std += s[k][window.vp_id].std;
         } else if (k == 'variety') {
-          combined_stats[p][k]['min'] += s[k]['min'];
-          combined_stats[p][k]['max'] += s[k]['max'];
+          if (s[k]['min'] < combined_stats[p][k]['min']) {
+            combined_stats[p][k]['min'] = s[k]['min'];
+          }
+          if (s[k]['max'] > combined_stats[p][k]['max']) {
+            combined_stats[p][k]['max'] = s[k]['max'];
+          }
           combined_stats[p][k]['mean'] += s[k]['mean'];
         } else if (k == 'per_group' || k == 'variable_prices_by_var') {
           for (var g in s[k]) {
             for (var measure in s[k][g]) {
               if (measure == 'variable_prices') {
                 if (window.vp_id && s[k][g][measure] && s[k][g][measure][window.vp_id]) {
-                  combined_stats[p][k][g][measure]['min'] += s[k][g][measure][window.vp_id]['min'];
-                  combined_stats[p][k][g][measure]['max'] += s[k][g][measure][window.vp_id]['max'];
+                  if (s[k][g][measure][window.vp_id]['min'] < combined_stats[p][k][g][measure]['min']) {
+                    combined_stats[p][k][g][measure]['min'] = s[k][g][measure][window.vp_id]['min'];
+                  }
+                  if (s[k][g][measure][window.vp_id]['max'] > combined_stats[p][k][g][measure]['max']) {
+                    combined_stats[p][k][g][measure]['max'] = s[k][g][measure][window.vp_id]['max'];
+                  }
                   combined_stats[p][k][g][measure]['mean'] += s[k][g][measure][window.vp_id]['mean'];
                 }
               } else {
                 if (!combined_stats[p][k][g][measure]) combined_stats[p][k][g][measure] = {'min':0, 'max':0, 'mean':0, 'std':0}
-                combined_stats[p][k][g][measure]['min'] += s[k][g][measure]['min'];
-                combined_stats[p][k][g][measure]['max'] += s[k][g][measure]['max'];
+                if (s[k][g][measure]['min'] < combined_stats[p][k][g][measure]['min']) {
+                  combined_stats[p][k][g][measure]['min'] = s[k][g][measure]['min'];
+                }
+                if (s[k][g][measure]['max'] > combined_stats[p][k][g][measure]['max']) {
+                  combined_stats[p][k][g][measure]['max'] = s[k][g][measure]['max'];
+                }
                 combined_stats[p][k][g][measure]['mean'] += s[k][g][measure]['mean'];
                 if (s[k][g][measure]['std']) {
                   combined_stats[p][k][g][measure]['std'] += s[k][g][measure]['std'];
@@ -357,8 +377,12 @@ $(document).ready(function() {
           }
         } else if (k == 'nutrition') {
           for (var n in s[k]) {
-            combined_stats[p][k][n]['min'] += s[k][n]['min'];
-            combined_stats[p][k][n]['max'] += s[k][n]['max'];
+            if (s[k][n]['min'] < combined_stats[p][k][n]['min']) {
+              combined_stats[p][k][n]['min'] = s[k][n]['min'];
+            }
+            if (s[k][n]['max'] > combined_stats[p][k][n]['max']) {
+              combined_stats[p][k][n]['max'] = s[k][n]['max'];
+            }
             combined_stats[p][k][n]['mean'] += s[k][n]['mean'];
           }
         }
@@ -378,22 +402,22 @@ $(document).ready(function() {
         if (!combined_stats[k]) combined_stats[k] = {}
         if (k == 'price' || k == 'variable_price') {
           if (!combined_stats[k]['min']) combined_stats[k] = {'min':0,'max':0,'mean':0, 'std': 0}
-          combined_stats[k]['min'] += s[k]['min'] / s.count;
-          combined_stats[k]['max'] += s[k]['max'] / s.count;
+          combined_stats[k]['min'] += s[k]['min'];
+          combined_stats[k]['max'] += s[k]['max'];
           combined_stats[k]['mean'] += s[k]['mean'] / s.count;
           combined_stats[k]['std'] += s[k]['std'] / s.count;
         } else if (k == 'variety') {
           if (!combined_stats[k]['min']) combined_stats[k] = {'min':0,'max':0,'mean':0}
-          combined_stats[k]['min'] += s[k]['min'] / s.count;
-          combined_stats[k]['max'] += s[k]['max'] / s.count;
+          combined_stats[k]['min'] += s[k]['min'];
+          combined_stats[k]['max'] += s[k]['max'];
           combined_stats[k]['mean'] += s[k]['mean'] / s.count;
         } else if (k == 'per_group' || k == 'variable_prices_by_var') {
           for (var g in s[k]) {
             if (!combined_stats[k][g]) combined_stats[k][g] = {}
             for (var measure in s[k][g]) {
               if (!combined_stats[k][g][measure]) combined_stats[k][g][measure] = {'min':0, 'max': 0, 'mean': 0, 'std': 0}
-              combined_stats[k][g][measure]['min'] += s[k][g][measure]['min'] / s.count;
-              combined_stats[k][g][measure]['max'] += s[k][g][measure]['max'] / s.count;
+              combined_stats[k][g][measure]['min'] += s[k][g][measure]['min'];
+              combined_stats[k][g][measure]['max'] += s[k][g][measure]['max'];
               combined_stats[k][g][measure]['mean'] += s[k][g][measure]['mean'] / s.count;
               if (s[k][g][measure]['std']) {
                 combined_stats[k][g][measure]['std'] += s[k][g][measure]['std'] / s.count;
@@ -403,8 +427,8 @@ $(document).ready(function() {
         } else if (k == 'nutrition') {
           for (var n in s[k]) {
             if (!combined_stats[k][n]) combined_stats[k][n] = {'min': 0, 'max': 0, 'mean': 0, 'std': 0}
-            combined_stats[k][n]['min'] += s[k][n]['min'] / s.count;
-            combined_stats[k][n]['max'] += s[k][n]['max'] / s.count;
+            combined_stats[k][n]['min'] += s[k][n]['min'];
+            combined_stats[k][n]['max'] += s[k][n]['max'];
             combined_stats[k][n]['mean'] += s[k][n]['mean'] / s.count;
           }
         }
