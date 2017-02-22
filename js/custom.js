@@ -486,7 +486,7 @@ $(document).ready(function() {
     for (var k in combined_stats.variable_prices_by_var) {
       for (var v in combined_stats.variable_prices_by_var[k]) {
         var d = combined_stats.variable_prices_by_var[k][v];
-        vpvSum += "<tr><td>" + k + ": " + v + "</td><td>$" + round(d['min']) + "</td><td>$" + round(d['mean']) + "</td><td>$" + round(d['max']) + "</td><td>" + round(d['std']) + "</td><tr>";
+        vpvSum += "<tr><td>" + k + ": " + v + "</td><td>$" + round(d['min']) + "</td><td>$" + round(d['mean']) + "</td><td>$" + round(d['max']) + "</td><td>" + round(d['std']) + "</td></tr>";
       }
     }
     
