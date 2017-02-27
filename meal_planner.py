@@ -412,10 +412,33 @@ def get_diff(nutrients, target):
 def check_nutritional_diff(diff):
   return all(v == 0 for v in diff.values())
 
+def get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways):
+  meal = {}
+  for food, details in foods.items():
+    try:
+      if details['Variety'] in allowed_varieties:
+        if get_fg_for_p(details, person) == 'Takeaway' and not allow_takeaways:
+          continue
+        if get_fg_for_p(details, person) == 'Alcohol' and selected_person_nutrient_targets['Alcohol % energy']['max'] == 0:
+          continue
+        if get_fg_for_p(details, person) == 'Discretionary foods' and selected_person_nutrient_targets['Discretionary foods % energy']['max'] == 0:
+          continue
+        if 'price/100g' not in details:
+          continue
+        t = details['constraints'][person]
+        r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
+        if len(r) > 0:
+          if (get_fg_for_p(details, person) == 'Discretionary foods' or get_fg_for_p(details, person) == 'Takeaway') and not person.endswith('C'):
+            if random.random() > .4:
+              continue
+          meal[food] = random.choice(r)
+    except KeyError as e:
+      logger.debug('not including {} due to missing {}'.format(food, e))
+  return meal
+
 def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 10000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False, selected_person_food_group_serve_targets={}):
   s = time.time()
 
-  meal = {}
   meal_plans = {}
   vp_keys_effecting = set()
   
@@ -443,34 +466,11 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   logger.info('{} selected. nutritional targets: {}'.format(person, selected_person_nutrient_targets))
   # Get a random starting meal plan
-
-  combinations = 1
-
-  for food, details in foods.items():
-    try:
-      if details['Variety'] in allowed_varieties:
-        if get_fg_for_p(details, person) == 'Takeaway' and not allow_takeaways:
-          continue
-        if get_fg_for_p(details, person) == 'Alcohol' and selected_person_nutrient_targets['Alcohol % energy']['max'] == 0:
-          continue
-        if get_fg_for_p(details, person) == 'Discretionary foods' and selected_person_nutrient_targets['Discretionary foods % energy']['max'] == 0:
-          continue
-        if 'price/100g' not in details:
-          continue
-        t = details['constraints'][person]
-        r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
-        if len(r) > 0:
-          if (get_fg_for_p(details, person) == 'Discretionary foods' or get_fg_for_p(details, person) == 'Takeaway') and not person.endswith('C'):
-            if random.random() > .4:
-              continue
-          meal[food] = random.choice(r)
-          combinations *= len(r)
-    except KeyError as e:
-      logger.debug('not including {} due to missing {}'.format(food, e))
+  meal = get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways)
 
   if len(meal) == 0:
     logger.error("0 items in menu!!!")
-  logger.debug('{} items in menu. {} distinct possible menus'.format(len(meal), combinations))
+  logger.debug('{} items in menu'.format(len(meal)))
   # Iteratively improve
   
   for i in range(iteration_limit):
@@ -542,6 +542,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           variety = np.average(varieties, weights=amounts)
           meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variable prices': vp_dict, 'nutrition': nutrients, 'variety': variety, 'per_group': per_group}
           logger.debug('Hit!')
+          meal = get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways)
     else:
       off_measures = []
       for measure, value in diff.items():
