@@ -632,7 +632,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       'variable_prices_by_var': dict([(k, {}) for k in vp_keys])
     }
     for vp in vp_keys_effecting:
-      vp_all = [m['variable prices'][vp] for h,m in meal_plans.items()]
+      vp_all = [m['variable prices'].get(vp, m['price']) for h,m in meal_plans.items()]
       vp_min = min(vp_all)
       vp_max = max(vp_all)
       vp_mean = sum(vp_all) / len(vp_all)
