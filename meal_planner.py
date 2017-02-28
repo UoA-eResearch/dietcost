@@ -719,7 +719,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     writer.writerow([dt, iteration_limit, min_serve_size_difference, allowed_varieties, allow_takeaways])
     writer.writerow([])
     writer.writerow(["Results"])
-    keys = sorted(meal.keys())
+    keys = sorted(foods.keys())
     writer.writerow(
       ["unique id", "price", "variety"] +
       keys +
@@ -731,7 +731,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     for h,m in meal_plans.items():
       writer.writerow(
         [h, m['price'], m['variety']] +
-        [m['meal'][k] for k in keys] +
+        [m['meal'].get(k, 0) for k in keys] +
         [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']] +
         [m['nutrition'][k] for k,v in targetmap.items()] +
         [m['variable prices'].get(k, m['price']) for k in vp_keys_effecting] +
