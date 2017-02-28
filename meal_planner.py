@@ -734,7 +734,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         [m['meal'][k] for k in keys] +
         [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']] +
         [m['nutrition'][k] for k,v in targetmap.items()] +
-        [m['variable prices'][k] for k in vp_keys_effecting] +
+        [m['variable prices'].get(k, m['price']) for k in vp_keys_effecting] +
         [m['per_group'][x]['variable prices'].get(y, m['per_group'][x]['price']) for x in food_groups for y in vp_keys_effecting]
       )
   e = time.time()
@@ -743,4 +743,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   return {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
 
 if __name__ == "__main__":
-  get_meal_plans("adult man C")
+  get_meal_plans("adult man")
