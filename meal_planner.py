@@ -68,8 +68,8 @@ linked_foods = {
   },
   'spread-bread': {
     # The total number of serves of spread is equal to or lower than the total number of serves of bread and crackers
-    'lower': ["03036", "03037", "03038", "03040", "03044"], # spread
-    'higher': ["05083", "06088", "06089", "05087", "08098", "08108", "08097"], # bread/crackers
+    'lower': ["05083", "06088", "06089", "08110", "08098", "08108", "08097"], # spread
+    'higher': ["03036", "03037", "03038", "03040", "03044", "03062"], # bread/crackers
   }
 }
 
