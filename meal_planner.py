@@ -328,6 +328,8 @@ for row in variableFoodPricesSheet:
   if int(row['Food Id']) not in food_ids:
     logger.debug("{} has a variable price but is not defined!".format(row['Food Id']))
     continue
+  if not row['price/100EP']:
+    continue
   name = food_ids[int(row['Food Id'])]
   foods[name]['variable prices'].append({
     'outlet type': row['outlet type'],
@@ -338,7 +340,7 @@ for row in variableFoodPricesSheet:
     'season': row['season'],
     'type': row['type'],
     'urban': 'urban' if row['urban'] == 'yes' else 'rural',
-    'price/100g': row['price/100g']
+    'price/100g': row['price/100EP']
   })
 
 variable_prices = {}
@@ -495,6 +497,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
     logger.debug('Iteration: {}'.format(i))
     target_measure = None
     target_fg = None
+    target_link = None
 
     if check_nutritional_diff(diff):
       h = hash(frozenset(meal.items()))
