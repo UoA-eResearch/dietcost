@@ -113,6 +113,12 @@ foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C (3)
 foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
 variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
 
+f = "cpiprices.xlsx"
+xl_workbook = xlrd.open_workbook(f)
+cpiPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
+
+variableFoodPricesSheet += cpiPricesSheet
+
 for row in foodsSheet:
   name = row['Commonly consumed food']
   if row['Food group'] == 'Sauces, dressings, spreads, sugars':
@@ -340,7 +346,8 @@ for row in variableFoodPricesSheet:
     'season': row['season'],
     'type': row['type'],
     'urban': 'urban' if row['urban'] == 'yes' else 'rural',
-    'price/100g': row['price/100EP']
+    'price/100g': row['price/100EP'],
+    'year': int(row.get('year') or 0)
   })
 
 variable_prices = {}

@@ -170,6 +170,7 @@ $(document).ready(function() {
       "discount": "loyalty",
       "urban": "business",
       "season": "today",
+      "year": "schedule",
       "deprivation": "trending_down",
       "population group": "perm_identity",
       "outlet type": "label",
