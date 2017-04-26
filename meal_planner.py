@@ -615,6 +615,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         except KeyError as e:
           # Nutrional info for this food/target not known
           pass
+      if not foods_that_impact_this_measure:
+        raise ValueError("No foods impact {}!".format(target_measure))
       food = random.choice(foods_that_impact_this_measure)
       t = foods[food]['constraints'][person]
       nt = selected_person_nutrient_targets[target_measure]
