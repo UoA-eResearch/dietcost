@@ -314,9 +314,11 @@ for row in nutrientsTargetsCSheet:
 for row in foodPricesSheet:
   try:
     name = food_ids[int(row['Commonly consumed food ID'])]
-    foods[name]['price/100g'] = row['price/100g AP']
+    foods[name]['price/100g'] = float(row['price/100g AP'])
   except KeyError:
     logger.debug("{} has a price but is not defined!".format(row['Commonly consumed food ID']))
+  except ValueError:
+    logger.warning("{} is not a valid price for {} - must be float".format(row['price/100g AP'], name))
 
 # Sanity check
 
