@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+import requests
+import pprint
+
+meal_plan = {
+ u'Apples, fresh': 6240.0,
+ u'Avocados, fresh': 1650.0,
+ u'Bananas, fresh': 4260.0,
+ u'Beef steak, blade': 1900.0,
+ u'Beef, mince': 150.0,
+ u'Biscuits, Tim Tam': 1140.0,
+ u'Biscuits, crackers, shapes': 345.0,
+ u'Bread, wheatmeal': 2047.5,
+ u'Bread, white': 1527.5,
+ u'Bread, wholegrain': 2471.0,
+ u'Broccoli, fresh': 3300.0,
+ u'Butter': 1537.5,
+ u'Cabbage, fresh': 862.5,
+ u'Capsicums,fresh': 1237.5,
+ u'Carrots, fresh': 712.5,
+ u'Cauliflower, fresh': 2025.0,
+ u'Chicken, whole, pre-cooked': 2600.0,
+ u'Chocolate, dairy, milk block': 2675.0,
+ u'Cola': 10375.0,
+ u'Cornflakes': 3510.0,
+ u'Cottage cheese': 460.0,
+ u'Courgettes, fresh': 1462.5,
+ u'Cucumber, fresh': 1087.5,
+ u'Diet Cola': 4500.0,
+ u'Eggs': 1400.0,
+ u'Fish fillets, fresh': 2050.0,
+ u'Fish fillets, frozen': 1200.0,
+ u'Grapes, fresh': 480.0,
+ u'Hummus dip': 1350.0,
+ u'Kiwifruit, fresh': 3060.0,
+ u'Kumara, fresh': 4792.5,
+ u'Lamb shoulder chops': 2550.0,
+ u'Lettuce, fresh': 712.5,
+ u'Mandarins, fresh': 1680.0,
+ u'Milk, standard': 5165.0,
+ u'Mixed vegetables, frozen': 1650.0,
+ u'Muesli': 3348.5,
+ u'Mushrooms, fresh': 1537.5,
+ u'Olive oil': 235.0,
+ u'Onions, fresh': 3412.5,
+ u'Oranges, fresh': 6420.0,
+ u'Pasta regular': 325.0,
+ u'Peaches, canned in clear juice': 2400.0,
+ u'Peanut butter': 465.0,
+ u'Peanuts salted': 625.0,
+ u'Pears, fresh': 1140.0,
+ u'Peas, frozen': 188.5,
+ u'Pork leg roast': 2150.0,
+ u'Potatoes, fresh': 742.5,
+ u'Pumpkin, fresh': 4387.5,
+ u'Rice, long grain, white': 877.5,
+ u'Sausages': 5250.0,
+ u'Spaghetti, canned lite': 3315.0,
+ u'Strawberry jam': 475.0,
+ u'Sultanas, dried': 1200.0,
+ u'Sweets - gum, jelly soft ': 1325.0,
+ u'Tomato sauce, light': 697.5,
+ u'Tomatoes, canned, no added salt': 825.0,
+ u'Tomatoes, fresh': 1950.0,
+ u'Tuna, canned in oil': 4600.0,
+ u'Weetbix': 487.5,
+ u'White sugar': 62.5,
+ u'Yoghurt, natural, low fat': 2400.0
+}
+
+request = requests.post("http://dietcost.cer.auckland.ac.nz/check_meal_plan_for_person", json = { "meal_plan": meal_plan, "person": "adult man" })
+pprint.pprint(request.json())
+
+# Will print
+{u'Alcohol % energy': 0,
+ u'CHO % energy': -0.8446645905845926,
+ u'Discretionary foods % energy': 0,
+ u'Energy kJ': 606702.87965,
+ u'Fat % energy': 1.2716098154878352,
+ u'Saturated fat % energy': 2.34292133309342,
+ u'Total sugars % energy': 0,
+ u'fibre g': 863.9075000000003,
+ u'protein % energy': 0,
+ u'red meat (g)': 3300.0,
+ u'sodium mg': 135851.97900000005}
+
+# Values here indicate the difference from the constraints - negative values indicate the plan is too low for that constraint, whereas positive values indicate it is too high. 0 means the plan is within the range of acceptable values for that constraint.
+

@@ -4,6 +4,7 @@ import meal_planner
 from bottle import *
 import logging
 import os
+import copy
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('web_server')
@@ -53,6 +54,14 @@ def get_food_group_targets():
 @get('/get_var_price')
 def get_variable_price_options():
   return meal_planner.variable_prices
+
+@post('/check_meal_plan_for_person')
+def check_meal_plan_for_person():
+  person = request.json.get('person') or 'adult man'
+  meal_plan = request.json['meal_plan']
+  nutrients = meal_planner.get_nutrients(meal_plan, person)
+  nutrient_targets = meal_planner.convert_to_fortnightly(copy.deepcopy(meal_planner.nutrient_targets[person]))
+  return meal_planner.get_diff(nutrients, nutrient_targets)
 
 port = int(os.environ.get('PORT', 8080))
 

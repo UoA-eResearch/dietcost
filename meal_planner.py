@@ -461,6 +461,19 @@ def get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_siz
       logger.debug('not including {} due to missing {}'.format(food, e))
   return meal
 
+def convert_to_fortnightly(selected_person_nutrient_targets):
+  for measure in selected_person_nutrient_targets:
+    try:
+      # convert to fortnightly
+      if '%' not in measure:
+        if 'min' in selected_person_nutrient_targets[measure]:
+          selected_person_nutrient_targets[measure]['min'] *= 14
+        if 'max' in selected_person_nutrient_targets[measure]:
+          selected_person_nutrient_targets[measure]['max'] *= 14
+    except TypeError:
+      pass
+  return selected_person_nutrient_targets
+
 def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, iteration_limit = 50000, min_serve_size_difference=.5, allowed_varieties=[1,2,3], allow_takeaways=False, selected_person_food_group_serve_targets={}):
   s = time.time()
 
@@ -474,16 +487,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   if not selected_person_food_group_serve_targets:
     selected_person_food_group_serve_targets = dict([(fg,copy.deepcopy(food_groups[fg]['constraints_serves'][person])) for fg in food_groups if 'constraints_serves' in food_groups[fg] and person in food_groups[fg]['constraints_serves']])
 
-  for measure in selected_person_nutrient_targets:
-    try:
-      # convert to fortnightly
-      if '%' not in measure:
-        if 'min' in selected_person_nutrient_targets[measure]:
-          selected_person_nutrient_targets[measure]['min'] *= 14
-        if 'max' in selected_person_nutrient_targets[measure]:
-          selected_person_nutrient_targets[measure]['max'] *= 14
-    except TypeError:
-      pass
+  selected_person_nutrient_targets = convert_to_fortnightly(selected_person_nutrient_targets)
 
   for fg in selected_person_food_group_serve_targets:
     selected_person_food_group_serve_targets[fg]['max'] *= 14
