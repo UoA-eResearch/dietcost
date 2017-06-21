@@ -441,6 +441,8 @@ def check_nutritional_diff(diff):
 
 def get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways):
   meal = {}
+  combinations = 1
+
   for food, details in foods.items():
     try:
       if details['Variety'] in allowed_varieties:
@@ -459,9 +461,10 @@ def get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_siz
             if random.random() > .4:
               continue
           meal[food] = random.choice(r)
+          combinations *= len(r)
     except KeyError as e:
       logger.debug('not including {} due to missing {}'.format(food, e))
-  return meal
+  return meal, combinations
 
 def convert_to_fortnightly(selected_person_nutrient_targets):
   for measure in selected_person_nutrient_targets:
@@ -497,11 +500,12 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   logger.info('{} selected. nutritional targets: {}'.format(person, selected_person_nutrient_targets))
   # Get a random starting meal plan
-  meal = get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways)
+  meal, combinations = get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways)
+  comb_str = str(combinations)
 
   if len(meal) == 0:
     logger.error("0 items in menu!!!")
-  logger.debug('{} items in menu'.format(len(meal)))
+  logger.debug('{} items in menu. {}E+{} distinct possible menus'.format(len(meal), comb_str[0], len(comb_str)-1))
   # Iteratively improve
 
   for i in range(iteration_limit):
@@ -594,7 +598,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           variety = np.average(varieties, weights=amounts)
           meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variable prices': copy.copy(vp_dict), 'nutrition': copy.copy(nutrients), 'variety': variety, 'per_group': copy.copy(per_group)}
           logger.debug('Hit!')
-          meal = get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways)
+          meal, combinations = get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways)
     else:
       off_measures = []
       for measure, value in diff.items():
