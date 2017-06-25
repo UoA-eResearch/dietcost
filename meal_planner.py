@@ -357,6 +357,7 @@ vp_combos = set()
 
 for food in foods:
   vp = foods[food]['variable prices']
+  vp_by_id = {}
   for entry in vp:
     for v in entry:
       if v == 'price/100g':
@@ -367,6 +368,12 @@ for food in foods:
         variable_prices[v].append(entry[v])
     vp_id = '_'.join([str(entry[k]) for k in sorted(entry.keys()) if k != 'price/100g'])
     vp_combos.add(vp_id)
+    if vp_id not in vp_by_id:
+      vp_by_id[vp_id] = []
+    vp_by_id[vp_id].append(entry['price/100g'])
+  for vp, entries in vp_by_id.items():
+    vp_by_id[vp] = sum(entries) / len(entries)
+  foods[food]['variable prices'] = vp_by_id
 
 for entry in variable_prices:
   variable_prices[entry].sort()
@@ -575,13 +582,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
             per_group[fg]['price'] += price
 
             for vp_id in vp_combos:
-              match = None
-              for row in foods[item]['variable prices']:
-                row_id = '_'.join([str(row[k]) for k in vp_keys])
-                if vp_id == row_id:
-                  match = row['price/100g'] / 100 * amount
-              if not match:
-                match = price
+              match = foods[item]['variable prices'].get(vp_id, foods[item]['price/100g'])
+              match = match / 100 * amount
               if vp_id not in vp_dict:
                 vp_dict[vp_id] = 0
               vp_dict[vp_id] += match
@@ -776,6 +778,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   logger.info('iterations done, took {}s'.format(e-s))
   logger.debug('Matched meals: {}'.format(pprint.pformat(meal_plans)))
   logger.info('{} matched meals'.format(len(meal_plans)))
+  logger.debug('Stats: {}'.format(pprint.pformat(stats)))
 
   # Write to csv
   s = time.time()
