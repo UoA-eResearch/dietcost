@@ -375,6 +375,20 @@ for food in foods:
     vp_by_id[vp] = sum(entries) / len(entries)
   foods[food]['variable prices'] = vp_by_id
 
+for food in foods:
+  sm = []
+  fp = []
+  for vp, price in foods[food]['variable prices'].items():
+    if "supermarket" in vp:
+      sm.append(price)
+    if "fresh produce store" in vp:
+      fp.append(price)
+  if sm and fp:
+    sm = sum(sm) / len(sm)
+    fp = sum(fp) / len(fp)
+    if fp > sm:
+      print("{} costs ${} at a supermarket and ${} at a fresh produce store".format(food, round(sm, 2), round(fp, 2)))
+
 for entry in variable_prices:
   variable_prices[entry].sort()
 
