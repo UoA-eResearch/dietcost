@@ -11,12 +11,18 @@ import logging
 import os
 import csv
 import sys
+import json
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger('meal_planner')
 
 try:
   os.mkdir('csvs')
+except OSError:
+  pass
+
+try:
+  os.mkdir('json')
 except OSError:
   pass
 
@@ -829,7 +835,11 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   e = time.time()
   logger.debug('write done, took {}s'.format(e-s))
   inputs = {'person': person, 'nutrient_targets': selected_person_nutrient_targets, 'iteration_limit': iteration_limit, 'min_serve_size_difference': min_serve_size_difference, 'allowed_varieties': allowed_varieties, 'allow_takeaways': allow_takeaways, 'selected_person_food_group_serve_targets': selected_person_food_group_serve_targets}
-  return {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
+  results = {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
+  filename = 'json/{}.json'.format(dt)
+  with open(filename, 'w') as f:
+    json.dump(results, f)
+  return results
 
 if __name__ == "__main__":
   get_meal_plans("adult man")

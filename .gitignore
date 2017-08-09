@@ -4,4 +4,5 @@ load_csv_to_mysql.py
 *.swp
 output.txt
 csvs
+json
 nohup.out
