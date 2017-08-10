@@ -19,9 +19,13 @@ parser.add_argument('-i', '--iterations', dest="iterations", type=int, nargs='?'
 parser.add_argument('-f', '--folder', dest='folder', type=str, nargs='?', default='.', help='a folder to put the csv/json output into')
 parser.add_argument('-d', '--dataset', dest='dataset', type=str, nargs='?', default='dataset.xlsx', help='the dataset to use')
 parser.add_argument('-p', '--persona', dest='persona', type=str, nargs='?', default='adult man', help='which person to run the algorithm for')
+
 parser.add_argument('-t', '--takeaways', dest='allow_takeaways', action='store_true', help='include takeaways in meal plans')
 parser.add_argument('-nt', '--no-takeaways', dest='allow_takeaways', action='store_false', help='forbid takeaways')
 parser.set_defaults(allow_takeaways=True)
+
+parser.add_argument('-disc', '--discretionary', dest="discretionary", type=int, nargs='?', default=100, help='Maximum percentage of discretionary foods')
+parser.add_argument('-a', '--alcohol', dest="alcohol", type=int, nargs='?', default=100, help='Maximum percentage of Alcohol')
 
 args = parser.parse_args()
 
@@ -295,8 +299,8 @@ for row in nutrientsTargetsHSheet:
       n[measure][minormax] = f
     except ValueError:
       pass
-  n["Discretionary foods % energy"] = {'min': 0, 'max': 100}
-  n["Alcohol % energy"] = {'min': 0, 'max': 50}
+  n["Discretionary foods % energy"] = {'min': 0, 'max': args.discretionary}
+  n["Alcohol % energy"] = {'min': 0, 'max': args.alcohol}
   n["Total sugars % energy"] = {'min': 0, 'max': 100}
   n['fibre g']['max'] = n['fibre g']['min'] * 4
   nutrient_targets[p_strip] = n
@@ -328,7 +332,8 @@ for row in nutrientsTargetsCSheet:
       n[measure][minormax] = f
     except ValueError:
       pass
-  n["Discretionary foods % energy"] = {'min': 0, 'max': 50}
+  n["Discretionary foods % energy"] = {'min': 0, 'max': args.discretionary}
+  n["Alcohol % energy"] = {'min': 0, 'max': args.alcohol}
   nutrient_targets[p_strip] = n
 
 for row in foodPricesSheet:
