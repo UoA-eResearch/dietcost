@@ -638,7 +638,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
           variety = np.average(varieties, weights=amounts)
           meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variable prices': copy.copy(vp_dict), 'nutrition': copy.copy(nutrients), 'variety': variety, 'per_group': copy.copy(per_group)}
-          logger.debug('Hit!')
+          logger.info('Hit!')
           meal, combinations = get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways)
     else:
       off_measures = []
