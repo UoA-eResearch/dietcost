@@ -19,6 +19,9 @@ parser.add_argument('-i', '--iterations', dest="iterations", type=int, nargs='?'
 parser.add_argument('-f', '--folder', dest='folder', type=str, nargs='?', default='.', help='a folder to put the csv/json output into')
 parser.add_argument('-d', '--dataset', dest='dataset', type=str, nargs='?', default='dataset.xlsx', help='the dataset to use')
 parser.add_argument('-p', '--persona', dest='persona', type=str, nargs='?', default='adult man', help='which person to run the algorithm for')
+parser.add_argument('-t', '--takeaways', dest='allow_takeaways', action='store_true', help='include takeaways in meal plans')
+parser.add_argument('-nt', '--no-takeaways', dest='allow_takeaways', action='store_false', help='forbid takeaways')
+parser.set_defaults(allow_takeaways=True)
 
 args = parser.parse_args()
 
@@ -853,4 +856,4 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   return results
 
 if __name__ == "__main__":
-  get_meal_plans(args.persona, iteration_limit=args.iterations)
+  get_meal_plans(args.persona, iteration_limit=args.iterations, allow_takeaways=args.allow_takeaways)
