@@ -12,17 +12,28 @@ import os
 import csv
 import sys
 import json
+import argparse
+
+parser = argparse.ArgumentParser(description='Meal planner')
+parser.add_argument('-i', '--iterations', dest="iterations", type=int, nargs='?', default=50000, help='how many times should the algorithm attempt to improve?')
+parser.add_argument('-f', '--folder', dest='folder', type=str, nargs='?', default='.', help='a folder to put the csv/json output into')
+parser.add_argument('-d', '--dataset', dest='dataset', type=str, nargs='?', default='dataset.xlsx', help='the dataset to use')
+parser.add_argument('-p', '--persona', dest='persona', type=str, nargs='?', default='adult man', help='which person to run the algorithm for')
+
+args = parser.parse_args()
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger('meal_planner')
 
+csv_folder = os.path.join(args.folder, 'csvs')
 try:
-  os.mkdir('csvs')
+  os.mkdir(csv_folder)
 except OSError:
   pass
 
+json_folder = os.path.join(args.folder, 'json')
 try:
-  os.mkdir('json')
+  os.mkdir(json_folder)
 except OSError:
   pass
 
@@ -106,7 +117,7 @@ def parse_sheet(sheet, header=0, limit=None):
 
 # Load knowledge
 
-f = "dataset.xlsx"
+f = args.dataset
 xl_workbook = xlrd.open_workbook(f)
 sheet_names = xl_workbook.sheet_names()
 
@@ -803,7 +814,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   # Write to csv
   s = time.time()
   dt = str(datetime.datetime.now()).replace(':', '_')
-  filename = 'csvs/{}.csv'.format(dt)
+  filename = os.path.join(csv_folder, '{}.csv'.format(dt))
   with open(filename, 'w') as f:
     writer = csv.writer(f)
     writer.writerow(["Persona", "min/max"] + list(selected_person_nutrient_targets.keys()) + list(selected_person_food_group_serve_targets.keys()))
@@ -836,10 +847,10 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   logger.debug('write done, took {}s'.format(e-s))
   inputs = {'person': person, 'nutrient_targets': selected_person_nutrient_targets, 'iteration_limit': iteration_limit, 'min_serve_size_difference': min_serve_size_difference, 'allowed_varieties': allowed_varieties, 'allow_takeaways': allow_takeaways, 'selected_person_food_group_serve_targets': selected_person_food_group_serve_targets}
   results = {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
-  filename = 'json/{}.json'.format(dt)
+  filename = os.path.join(json_folder, '{}.json'.format(dt))
   with open(filename, 'w') as f:
     json.dump(results, f)
   return results
 
 if __name__ == "__main__":
-  get_meal_plans("adult man")
+  get_meal_plans(args.persona, iteration_limit=args.iterations)
