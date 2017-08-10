@@ -29,7 +29,7 @@ parser.add_argument('-a', '--alcohol', dest="alcohol", type=int, nargs='?', defa
 
 args = parser.parse_args()
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger('meal_planner')
 
 csv_folder = os.path.join(args.folder, 'csvs')
@@ -263,7 +263,7 @@ food_groups['Starchy vegetables']['constraints_serves'].update({
 for row in nutrientsSheet:
   fid = int(row['Common food ID'])
   if fid not in food_ids:
-    logger.debug("nutrition defined, but {} not known!".format(fid))
+    logger.warning("nutrition defined, but {} not known!".format(fid))
     continue
 
   floats = {}
@@ -341,7 +341,7 @@ for row in foodPricesSheet:
     name = food_ids[int(row['Commonly consumed food ID'])]
     foods[name]['price/100g'] = float(row['price/100g AP'])
   except KeyError:
-    logger.debug("{} has a price but is not defined!".format(row['Commonly consumed food ID']))
+    logger.warning("{} has a price but is not defined!".format(row['Commonly consumed food ID']))
   except ValueError:
     logger.warning("{} is not a valid price for {} - must be float".format(row['price/100g AP'], name))
 
@@ -359,7 +359,7 @@ for row in variableFoodPricesSheet:
   if not row['Food Id']:
     continue
   if int(row['Food Id']) not in food_ids:
-    logger.debug("{} has a variable price but is not defined!".format(row['Food Id']))
+    logger.warning("{} has a variable price but is not defined!".format(row['Food Id']))
     continue
   if not row['price/100EP']:
     continue
@@ -421,7 +421,7 @@ vp_keys = sorted(variable_prices.keys())
 vp_values = [variable_prices[k] for k in vp_keys]
 
 e = time.time()
-logger.debug('load done, took {}s'.format(e-s))
+logger.info('load done, took {}s'.format(e-s))
 
 def get_fg_for_p(details, person):
   if person.endswith('C') and 'Food group_C' in details:
@@ -509,7 +509,7 @@ def get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_siz
           meal[food] = random.choice(r)
           combinations *= len(r)
     except KeyError as e:
-      logger.debug('not including {} due to missing {}'.format(food, e))
+      logger.warning('not including {} due to missing {}'.format(food, e))
   return meal, combinations
 
 def convert_to_fortnightly(selected_person_nutrient_targets):
@@ -551,7 +551,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
 
   if len(meal) == 0:
     logger.error("0 items in menu!!!")
-  logger.debug('{} items in menu. {}E+{} distinct possible menus'.format(len(meal), comb_str[0], len(comb_str)-1))
+  logger.info('{} items in menu. {}E+{} distinct possible menus'.format(len(meal), comb_str[0], len(comb_str)-1))
   # Iteratively improve
 
   for i in range(iteration_limit):
@@ -719,7 +719,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       logger.debug("Changing {} from {}g to {}g".format(food, meal[food], new_val))
       meal[food] = new_val
 
-  logger.debug('last meal: {}\nnutritional diff: {}\nnutrients: {}'.format(pprint.pformat(meal), pprint.pformat(diff), pprint.pformat(nutrients)))
+  logger.info('last meal: {}\nnutritional diff: {}\nnutrients: {}'.format(pprint.pformat(meal), pprint.pformat(diff), pprint.pformat(nutrients)))
 
   # Calculate statistics
   prices = [m['price'] for h,m in meal_plans.items()]
@@ -852,7 +852,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         [m['per_group'][x]['variable prices'].get(y, m['per_group'][x]['price']) for x in food_groups for y in vp_keys_effecting]
       )
   e = time.time()
-  logger.debug('write done, took {}s'.format(e-s))
+  logger.info('write done, took {}s'.format(e-s))
   inputs = {'person': person, 'nutrient_targets': selected_person_nutrient_targets, 'iteration_limit': iteration_limit, 'min_serve_size_difference': min_serve_size_difference, 'allowed_varieties': allowed_varieties, 'allow_takeaways': allow_takeaways, 'selected_person_food_group_serve_targets': selected_person_food_group_serve_targets}
   results = {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
   filename = os.path.join(json_folder, '{}.json'.format(dt))
