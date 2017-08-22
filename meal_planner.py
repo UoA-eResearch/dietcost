@@ -291,6 +291,8 @@ for row in nutrientsTargetsHSheet:
     if 'grams' in measure and measure != 'fibre grams':
       continue
     try:
+      if value == "max":
+        value = 100
       f = float(value)
       if '(s)' in measure:
         measure = measure.replace("vege", "Vegetables").replace(" (s)", "").capitalize()
