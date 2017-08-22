@@ -286,17 +286,23 @@ for row in nutrientsTargetsHSheet:
     minormax = 'max'
 
   for measure, value in row.items():
-    if 'grams' in measure and measure != 'fibre grams' or '(s)' in measure:
+    if 'grams' in measure and measure != 'fibre grams':
       continue
     try:
       f = float(value)
-      if measure == 'Energy MJ':
-        measure = 'Energy kJ'
-        f *= 1000
-      measure = measure.replace("carb%", "CHO % energy").replace("fat %", "Fat % energy").replace("sat Fat", "Saturated fat").replace("protein %", "protein % energy").replace("grams", "g")
-      if measure not in n:
-        n[measure] = {}
-      n[measure][minormax] = f
+      if '(s)' in measure:
+        measure = measure.replace("vege", "Vegetables").replace(" (s)", "").capitalize()
+        if food_groups[measure]['constraints_serves'][p_strip][minormax] != f:
+          logger.warning("Override {} {} for {} from {} to {}".format(measure, minormax, p_strip, food_groups[measure]['constraints_serves'][p_strip][minormax], f))
+          food_groups[measure]['constraints_serves'][p_strip][minormax] = f
+      else:
+        if measure == 'Energy MJ':
+          measure = 'Energy kJ'
+          f *= 1000
+        measure = measure.replace("carb%", "CHO % energy").replace("fat %", "Fat % energy").replace("sat Fat", "Saturated fat").replace("protein %", "protein % energy").replace("grams", "g")
+        if measure not in n:
+          n[measure] = {}
+        n[measure][minormax] = f
     except ValueError:
       pass
   n["Discretionary foods % energy"] = {'min': 0, 'max': args.discretionary}
@@ -315,21 +321,27 @@ for row in nutrientsTargetsCSheet:
     minormax = 'max'
 
   for measure, value in row.items():
-    if 'grams' in measure and measure != 'fibre grams' or '(s)' in measure:
+    if 'grams' in measure and measure != 'fibre grams':
       continue
     try:
       f = float(value)
-      if measure == 'Energy MJ':
-        measure = 'Energy kJ'
-        f *= 1000
-      measure = measure.replace('% E CI', '% energy').replace('%E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('Sat Fat', 'Saturated fat').replace('alcohol', 'Alcohol').replace('Sodium', 'sodium').replace(" +-10%", "").replace("protein %", "protein % energy").replace("Alcohol", "Alcohol % energy").replace("grams", "g").replace('total', 'Total')
-      if measure not in n:
-        n[measure] = {}
-      #if minormax == 'min':
-      #  f *= .9
-      #else:
-      #  f *= 1.1
-      n[measure][minormax] = f
+      if '(s)' in measure:
+        measure = measure.replace("vege", "Vegetables").replace(" (s)", "").capitalize()
+        if food_groups[measure]['constraints_serves'][p_strip][minormax] != f:
+          logger.warning("Override {} {} for {} from {} to {}".format(measure, minormax, p_strip, food_groups[measure]['constraints_serves'][p_strip][minormax], f))
+          food_groups[measure]['constraints_serves'][p_strip][minormax] = f
+      else:
+        if measure == 'Energy MJ':
+          measure = 'Energy kJ'
+          f *= 1000
+        measure = measure.replace('% E CI', '% energy').replace('%E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('Sat Fat', 'Saturated fat').replace('alcohol', 'Alcohol').replace('Sodium', 'sodium').replace(" +-10%", "").replace("protein %", "protein % energy").replace("Alcohol", "Alcohol % energy").replace("grams", "g").replace('total', 'Total')
+        if measure not in n:
+          n[measure] = {}
+        #if minormax == 'min':
+        #  f *= .9
+        #else:
+        #  f *= 1.1
+        n[measure][minormax] = f
     except ValueError:
       pass
   n["Discretionary foods % energy"] = {'min': 0, 'max': args.discretionary}
