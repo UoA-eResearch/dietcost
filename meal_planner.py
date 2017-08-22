@@ -27,9 +27,11 @@ parser.set_defaults(allow_takeaways=True)
 parser.add_argument('-disc', '--discretionary', dest="discretionary", type=int, nargs='?', default=100, help='Maximum percentage of discretionary foods')
 parser.add_argument('-a', '--alcohol', dest="alcohol", type=int, nargs='?', default=100, help='Maximum percentage of Alcohol')
 
+parser.add_argument("-v", "--verbose", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO, help="increase output verbosity")
+
 args = parser.parse_args()
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=args.loglevel)
 logger = logging.getLogger('meal_planner')
 
 csv_folder = os.path.join(args.folder, 'csvs')
