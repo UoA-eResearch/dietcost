@@ -27,7 +27,9 @@ for p, runs in people.items():
   if p[-1] == 'C':
     target = c_people
   target[p] = {
-    "total_meal_plans": sum([r['total_meal_plans'] for r in runs])
+    "total_meal_plans": sum([r['total_meal_plans'] for r in runs]),
+    "per_group": {},
+    "nutrition": {}
   }
   for k in ["price", "variety"]:
     target[p][k] = {
@@ -36,18 +38,21 @@ for p, runs in people.items():
       "mean": np.mean([r[k]['mean'] for r in runs]),
       "std": np.mean([r[k]['std'] for r in runs if 'std' in r[k]])
     }
-  target[p]['per_group'] = {}
   for g in runs[0]['per_group']:
     if g not in target[p]['per_group']:
       target[p]['per_group'][g] = {}
     for measure in ["amount", "price", "serves"]:
-      if measure not in target[p]['per_group'][g]:
-        target[p]['per_group'][g][measure] = {}
       target[p]['per_group'][g][measure] = {
         "min": min([r['per_group'][g][measure]['min'] for r in runs]),
         "max": max([r['per_group'][g][measure]['max'] for r in runs]),
         "mean": np.mean([r['per_group'][g][measure]['mean'] for r in runs])
       }
+  for measure in runs[0]['nutrition']:
+    target[p]['nutrition'][measure] = {
+      "min": min([r['nutrition'][measure]['min'] for r in runs]),
+      "max": max([r['nutrition'][measure]['max'] for r in runs]),
+      "mean": np.mean([r['nutrition'][measure]['mean'] for r in runs])
+    }
 
 # Form a household
 def report(people):
