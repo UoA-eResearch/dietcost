@@ -20,7 +20,9 @@ for filename in sys.argv[1:]:
 h_people = {}
 c_people = {}
 
-food_groups = people[people.keys()[0]][0]['per_group'].keys()
+food_groups = sorted(people[people.keys()[0]][0]['per_group'].keys())
+nutrient_measures = sorted(people[people.keys()[0]][0]['nutrition'].keys())
+vpv_keys = set()
 
 for p, runs in people.items():
   target = h_people
@@ -29,7 +31,8 @@ for p, runs in people.items():
   target[p] = {
     "total_meal_plans": sum([r['total_meal_plans'] for r in runs]),
     "per_group": {},
-    "nutrition": {}
+    "nutrition": {},
+    "vpv": {}
   }
   for k in ["price", "variety"]:
     target[p][k] = {
@@ -38,7 +41,7 @@ for p, runs in people.items():
       "mean": np.mean([r[k]['mean'] for r in runs]),
       "std": np.mean([r[k]['std'] for r in runs if 'std' in r[k]])
     }
-  for g in runs[0]['per_group']:
+  for g in food_groups:
     if g not in target[p]['per_group']:
       target[p]['per_group'][g] = {}
     for measure in ["amount", "price", "serves"]:
@@ -47,12 +50,24 @@ for p, runs in people.items():
         "max": max([r['per_group'][g][measure]['max'] for r in runs]),
         "mean": np.mean([r['per_group'][g][measure]['mean'] for r in runs])
       }
-  for measure in runs[0]['nutrition']:
+  for measure in nutrient_measures:
     target[p]['nutrition'][measure] = {
       "min": min([r['nutrition'][measure]['min'] for r in runs]),
       "max": max([r['nutrition'][measure]['max'] for r in runs]),
       "mean": np.mean([r['nutrition'][measure]['mean'] for r in runs])
     }
+  for k in runs[0]['variable_prices_by_var']:
+    for v in runs[0]['variable_prices_by_var'][k]:
+      ck = "{}: {}".format(k, v)
+      vpv_keys.add(ck)
+      target[p]['vpv'][ck] = {
+        "min": min([r['variable_prices_by_var'][k][v]['min'] for r in runs]),
+        "max": max([r['variable_prices_by_var'][k][v]['max'] for r in runs]),
+        "mean": np.mean([r['variable_prices_by_var'][k][v]['mean'] for r in runs]),
+        "std": np.mean([r['variable_prices_by_var'][k][v]['std'] for r in runs])
+      }
+
+vpv_keys = sorted(vpv_keys)
 
 # Form a household
 def report(people):
@@ -91,9 +106,26 @@ def report(people):
     ))
   print("Average nutrition")
   print("Measure\tMin\tMean\tMax")
+  for m in nutrient_measures:
+    print("{}\t{:.2f}\t{:.2f}\t{:.2f}".format(
+      m,
+      np.mean([s['nutrition'][m]['min'] for p, s in people.items()]),
+      np.mean([s['nutrition'][m]['mean'] for p, s in people.items()]),
+      np.mean([s['nutrition'][m]['max'] for p, s in people.items()])
+    ))
   print("Variable price averages")
   print("Variable\tMin\tMean\tMax\tstdev")
+  for ck in vpv_keys:
+    print("{}\t${:.2f}\t${:.2f}\t${:.2f}\t{:.2f}".format(
+      ck,
+      sum([s['vpv'][ck]['min'] for p, s in people.items() if ck in s['vpv']]),
+      sum([s['vpv'][ck]['mean'] for p, s in people.items() if ck in s['vpv']]),
+      sum([s['vpv'][ck]['max'] for p, s in people.items() if ck in s['vpv']]),
+      sum([s['vpv'][ck]['std'] for p, s in people.items() if ck in s['vpv']])
+    ))
 
-
-print("Healthy household (adult man, adult woman, 14 boy, 7 girl) - 5 runs each (averaged before combining)")
+print("Healthy household (adult man, adult woman, 14 boy, 7 girl) - 5 runs each (averaged before combining)\n")
 report(h_people)
+print("\n\nCurrent household (adult man, adult woman, 14 boy, 7 girl) - 5 runs each (averaged before combining)\n")
+report(c_people)
+
