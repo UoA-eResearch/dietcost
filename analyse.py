@@ -25,6 +25,9 @@ nutrient_measures = sorted(people[people.keys()[0]][0]['nutrition'].keys())
 vpv_keys = set()
 
 for p, runs in people.items():
+  runs = [r for r in runs if r['total_meal_plans'] > 0]
+  if len(runs) == 0:
+    continue
   target = h_people
   if p[-1] == 'C':
     target = c_people
@@ -124,8 +127,18 @@ def report(people):
       sum([s['vpv'][ck]['std'] for p, s in people.items() if ck in s['vpv']])
     ))
 
-print("Healthy household (adult man, adult woman, 14 boy, 7 girl) - 5 runs each (averaged before combining)\n")
+print("Healthy household (adult man: {} meal plans, adult woman: {} meal plans, 14 boy: {} meal plans, 7 girl: {} meal plans) - 5 runs each (averaged before combining)\n".format(
+h_people.get('adult man', {}).get('total_meal_plans', 0),
+h_people.get('adult women', {}).get('total_meal_plans', 0),
+h_people.get('14 boy', {}).get('total_meal_plans', 0),
+h_people.get('7 girl', {}).get('total_meal_plans', 0),
+))
 report(h_people)
-print("\n\nCurrent household (adult man, adult woman, 14 boy, 7 girl) - 5 runs each (averaged before combining)\n")
+print("\n\nCurrent household (adult man: {} meal plans, adult woman: {} meal plans, 14 boy: {} meal plans, 7 girl: {} meal plans) - 5 runs each (averaged before combining)\n".format(
+c_people.get('adult man C', {}).get('total_meal_plans', 0),
+c_people.get('adult women C', {}).get('total_meal_plans', 0),
+c_people.get('14 boy C', {}).get('total_meal_plans', 0),
+c_people.get('7 girl C', {}).get('total_meal_plans', 0),
+))
 report(c_people)
 
