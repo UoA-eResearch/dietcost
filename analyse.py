@@ -6,6 +6,12 @@ import pprint
 import numpy as np
 import scipy.stats as st
 
+def combine_stdev(values):
+  return np.sqrt(np.sum(np.square(values)))
+
+def combine_means(means, lens):
+  return np.sum(np.multiply(means, lens)) / np.sum(lens)
+
 people = {}
 
 for filename in sys.argv[1:]:
@@ -31,8 +37,9 @@ for p, runs in people.items():
   target = h_people
   if p[-1] == 'C':
     target = c_people
+  total_meal_plans = [r['total_meal_plans'] for r in runs]
   target[p] = {
-    "total_meal_plans": sum([r['total_meal_plans'] for r in runs]),
+    "total_meal_plans": sum(total_meal_plans),
     "per_group": {},
     "nutrition": {},
     "vpv": {}
@@ -41,8 +48,8 @@ for p, runs in people.items():
     target[p][k] = {
       "min": min([r[k]['min'] for r in runs]),
       "max": max([r[k]['max'] for r in runs]),
-      "mean": np.mean([r[k]['mean'] for r in runs]),
-      "std": np.mean([r[k]['std'] for r in runs if 'std' in r[k]])
+      "mean": combine_means([r[k]['mean'] for r in runs], total_meal_plans),
+      "std": combine_stdev([r[k]['std'] for r in runs if 'std' in r[k]])
     }
   for g in food_groups:
     if g not in target[p]['per_group']:
@@ -51,13 +58,13 @@ for p, runs in people.items():
       target[p]['per_group'][g][measure] = {
         "min": min([r['per_group'][g][measure]['min'] for r in runs]),
         "max": max([r['per_group'][g][measure]['max'] for r in runs]),
-        "mean": np.mean([r['per_group'][g][measure]['mean'] for r in runs])
+        "mean": combine_means([r['per_group'][g][measure]['mean'] for r in runs], total_meal_plans)
       }
   for measure in nutrient_measures:
     target[p]['nutrition'][measure] = {
       "min": min([r['nutrition'][measure]['min'] for r in runs]),
       "max": max([r['nutrition'][measure]['max'] for r in runs]),
-      "mean": np.mean([r['nutrition'][measure]['mean'] for r in runs])
+      "mean": combine_means([r['nutrition'][measure]['mean'] for r in runs], total_meal_plans)
     }
   for k in runs[0]['variable_prices_by_var']:
     for v in runs[0]['variable_prices_by_var'][k]:
@@ -66,19 +73,20 @@ for p, runs in people.items():
       target[p]['vpv'][ck] = {
         "min": min([r['variable_prices_by_var'][k][v]['min'] for r in runs]),
         "max": max([r['variable_prices_by_var'][k][v]['max'] for r in runs]),
-        "mean": np.mean([r['variable_prices_by_var'][k][v]['mean'] for r in runs]),
-        "std": np.mean([r['variable_prices_by_var'][k][v]['std'] for r in runs])
+        "mean": combine_means([r['variable_prices_by_var'][k][v]['mean'] for r in runs], total_meal_plans),
+        "std": combine_stdev([r['variable_prices_by_var'][k][v]['std'] for r in runs])
       }
 
 vpv_keys = sorted(vpv_keys)
 
 # Form a household
 def report(people):
-  total_meal_plans = np.prod([s["total_meal_plans"] for p,s in people.items()])
-  print("Total combined meal plans: {:.2E}".format(total_meal_plans))
-  price_std = np.mean([s['price']['std'] for p, s in people.items()])
-  price_mean = np.mean([s['price']['mean'] for p, s in people.items()])
-  moe = 1.96 * price_std / np.sqrt(len(people))
+  total_meal_plans = [s['total_meal_plans'] for p, s in people.items()]
+  total_combined_meal_plans = np.prod(total_meal_plans)
+  print("Total combined meal plans: {:.2E}".format(total_combined_meal_plans))
+  price_std = combine_stdev([s['price']['std'] for p, s in people.items()])
+  price_mean = combine_means([s['price']['mean'] for p, s in people.items()], total_meal_plans)
+  moe = 1.96 * price_std / np.sqrt(np.sum(total_meal_plans))
   print("Price range: ${:.2f} - ${:.2f} (${:.2f} average). stdev = {:.2f}, 95% CI range = ${:.2f} - ${:.2f}".format(
     min(s['price']['min'] for p, s in people.items()),
     max(s['price']['max'] for p, s in people.items()),
@@ -90,7 +98,7 @@ def report(people):
   print("Variety range: {:.2f} - {:.2f} ({:.2f} average)".format(
     min(s['variety']['min'] for p, s in people.items()),
     max(s['variety']['max'] for p, s in people.items()),
-    np.mean([s['variety']['mean'] for p, s in people.items()])
+    combine_means([s['variety']['mean'] for p, s in people.items()], total_meal_plans)
   ))
   print("Food group breakdown")
   print("Category\tAmount\tPrice\tServes")
@@ -113,7 +121,7 @@ def report(people):
     print("{}\t{:.2f}\t{:.2f}\t{:.2f}".format(
       m,
       np.mean([s['nutrition'][m]['min'] for p, s in people.items()]),
-      np.mean([s['nutrition'][m]['mean'] for p, s in people.items()]),
+      combine_means([s['nutrition'][m]['mean'] for p, s in people.items()], total_meal_plans),
       np.mean([s['nutrition'][m]['max'] for p, s in people.items()])
     ))
   print("Variable price averages")
