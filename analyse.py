@@ -84,12 +84,12 @@ def report(people):
   total_meal_plans = [s['total_meal_plans'] for p, s in people.items()]
   total_combined_meal_plans = np.prod(total_meal_plans)
   print("Total combined meal plans: {:.2E}".format(total_combined_meal_plans))
-  price_std = combine_stdev([s['price']['std'] for p, s in people.items()])
-  price_mean = combine_means([s['price']['mean'] for p, s in people.items()], total_meal_plans)
+  price_std = sum([s['price']['std'] for p, s in people.items()])
+  price_mean = sum([s['price']['mean'] for p, s in people.items()])
   moe = 1.96 * price_std / np.sqrt(np.sum(total_meal_plans))
   print("Price range: ${:.2f} - ${:.2f} (${:.2f} average). stdev = {:.2f}, 95% CI range = ${:.2f} - ${:.2f}".format(
-    min(s['price']['min'] for p, s in people.items()),
-    max(s['price']['max'] for p, s in people.items()),
+    sum(s['price']['min'] for p, s in people.items()),
+    sum(s['price']['max'] for p, s in people.items()),
     price_mean,
     price_std,
     price_mean - moe,
