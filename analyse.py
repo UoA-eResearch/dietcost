@@ -14,6 +14,8 @@ def combine_means(means, lens):
 
 people = {}
 
+meal_plans = {}
+
 for filename in sys.argv[1:]:
   with open(filename) as f:
     results = json.load(f)
@@ -21,6 +23,9 @@ for filename in sys.argv[1:]:
   s = results['stats']
   if p not in people:
     people[p] = []
+  if p not in meal_plans:
+    meal_plans[p] = {}
+  meal_plans[p].update(results['meal_plans'])
   people[p].append(s)
 
 h_people = {}
@@ -149,4 +154,11 @@ c_people.get('14 boy C', {}).get('total_meal_plans', 0),
 c_people.get('7 girl C', {}).get('total_meal_plans', 0),
 ))
 report(c_people)
+
+print("\n")
+#"express the results as % of healthy diets that are more expensive than the average or the maximum of the current diets"
+for c in c_people:
+  h = c.replace(' C', '')
+  n_more_expensive = sum([meal_plan['price'] > c_people[c]['price']['mean'] for meal_plan in meal_plans[h].values()])
+  print("{}/{} ({:.2f}%) of {} meal plans are more expensive than the average for {} (${:.2f})".format(n_more_expensive, len(meal_plans[h]), float(n_more_expensive) / len(meal_plans[h]) * 100, h, c, c_people[c]['price']['mean']))
 
