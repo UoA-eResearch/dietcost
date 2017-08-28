@@ -89,7 +89,7 @@ def report(people):
   total_meal_plans = [s['total_meal_plans'] for p, s in people.items()]
   total_combined_meal_plans = np.prod(total_meal_plans)
   print("Total combined meal plans: {:.2E}".format(total_combined_meal_plans))
-  price_std = sum([s['price']['std'] for p, s in people.items()])
+  price_std = combine_stdev([s['price']['std'] for p, s in people.items()])
   price_mean = sum([s['price']['mean'] for p, s in people.items()])
   moe = 1.96 * price_std / np.sqrt(np.sum(total_meal_plans))
   print("Price range: ${:.2f} - ${:.2f} (${:.2f} average). stdev = {:.2f}, 95% CI range = ${:.2f} - ${:.2f}".format(
@@ -137,7 +137,7 @@ def report(people):
       sum([s['vpv'][ck]['min'] for p, s in people.items() if ck in s['vpv']]),
       sum([s['vpv'][ck]['mean'] for p, s in people.items() if ck in s['vpv']]),
       sum([s['vpv'][ck]['max'] for p, s in people.items() if ck in s['vpv']]),
-      sum([s['vpv'][ck]['std'] for p, s in people.items() if ck in s['vpv']])
+      combine_stdev([s['vpv'][ck]['std'] for p, s in people.items() if ck in s['vpv']])
     ))
 
 print("Healthy household (adult man: {} meal plans, adult woman: {} meal plans, 14 boy: {} meal plans, 7 girl: {} meal plans) - 5 runs each (averaged before combining)\n".format(
