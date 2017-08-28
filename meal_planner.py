@@ -312,7 +312,7 @@ for row in nutrientsTargetsHSheet:
   n["Discretionary foods % energy"] = {'min': 0, 'max': args.discretionary}
   n["Alcohol % energy"] = {'min': 0, 'max': args.alcohol}
   n["Total sugars % energy"] = {'min': 0, 'max': 100}
-  n['fibre g']['max'] = n['fibre g']['min'] * 4
+#  n['fibre g']['max'] = n['fibre g']['min'] * 4
   nutrient_targets[p_strip] = n
 
 for row in nutrientsTargetsCSheet:
