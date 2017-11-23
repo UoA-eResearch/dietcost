@@ -60,7 +60,7 @@ s = time.time()
 
 # Used to match nutritional information to nutritional targets
 targetmap = {
-  'Sodium': 'sodium mg',
+  'Sodium m': 'sodium mg',
   'CHO': 'CHO % energy',
   'protein':  'protein % energy',
   'Sat fat': 'Saturated fat % energy',
@@ -76,7 +76,7 @@ targetmap = {
 reverse_targetmap = dict([(v,k) for k,v in targetmap.items()])
 
 target_to_measure = {
-  'sodium mg': 'Sodium g/100g',
+  'sodium mg': 'Sodium mg/100g',
   'CHO % energy': 'CHO g/100g',
   'protein % energy': 'protein g/100g',
   'Saturated fat % energy': 'Sat fat g/100g',
@@ -134,8 +134,8 @@ foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
 nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
 nutrientsTargetsHSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=14, limit=8)
 nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=24, limit=8)
-foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints H(3)'), header=2)
-foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints C (3)'), header=1)
+foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Healthy'), header=2)
+foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Current'), header=2)
 foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
 variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
 
@@ -169,8 +169,8 @@ food_groups['Starchy vegetables'] = {}
 isStarchy = False
 
 for row in foodConstraintsHSheet:
-  if row['Food ID'] and int(row['Food ID']) in food_ids:
-    name = food_ids[int(row['Food ID'])]
+  if row['Commonly consumed food ID'] and int(row['Commonly consumed food ID']) in food_ids:
+    name = food_ids[int(row['Commonly consumed food ID'])]
     # per week
     foods[name]['constraints'] = {
       '14 boy': {'min': float(row['Min per week_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
@@ -184,8 +184,8 @@ for row in foodConstraintsHSheet:
       pass
     if isStarchy:
       foods[name]['Food group'] = 'Starchy vegetables'
-  elif row['Food']:
-    partial = row['Food'].split()[0]
+  elif row['Commonly consumed food']:
+    partial = row['Commonly consumed food'].split()[0]
     if partial == 'Meat,':
       partial = 'Protein'
     if partial == 'Fats' or partial == 'grams':
@@ -204,14 +204,14 @@ for row in foodConstraintsHSheet:
         }
 
 for row in foodConstraintsCSheet:
-  if row['_2'] and int(row['_2']) in food_ids:
-    name = food_ids[int(row['_2'])]
+  if row['Commonly consumed food ID'] and int(row['Commonly consumed food ID']) in food_ids:
+    name = food_ids[int(row['Commonly consumed food ID'])]
     # per week
     c = {
-      '14 boy C': {'min': float(row['Min per wk_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
-      '7 girl C': {'min': float(row['Min per wk_3']) * 2, 'max': float(row['Max per week_3']) * 2 * MAX_SCALE},
-      'adult man C': {'min': float(row['Min per wk']) * 2, 'max': float(row['Max per week']) * 2 * MAX_SCALE},
-      'adult women C': {'min': float(row['Min per wk_1']) * 2, 'max': float(row['Max per week_1']) * 2 * MAX_SCALE}
+      '14 boy C': {'min': float(row['Min per week_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
+      '7 girl C': {'min': float(row['Min per week_3']) * 2, 'max': float(row['Max per week_3']) * 2 * MAX_SCALE},
+      'adult man C': {'min': float(row['Min per week']) * 2, 'max': float(row['Max per week']) * 2 * MAX_SCALE},
+      'adult women C': {'min': float(row['Min per week_1']) * 2, 'max': float(row['Max per week_1']) * 2 * MAX_SCALE}
     }
     if 'constraints' not in foods[name]:
       # Uncomment this to default H constraints from C where missing in H
@@ -221,7 +221,7 @@ for row in foodConstraintsCSheet:
     else:
       foods[name]['constraints'].update(c)
     try:
-      foods[name]['serve size'] = int(row['_4'])
+      foods[name]['serve size'] = int(row['serve size'])
     except ValueError:
       pass
     if partial != 'Discretionary' and foods[name]['Food group'] == 'Discretionary foods':
@@ -234,21 +234,22 @@ for row in foodConstraintsCSheet:
       elif partial == 'Protein':
         fg_header = 'Protein'
       foods[name]['Food group_C'] = fg_header
-  elif row['per week']:
-    fg_header = row['per week'].strip()
-    partial = fg_header.split()[0]
+  elif row['Food group']:
+    fg_header = row['Food group'].strip()
+    partial = fg_header.replace(",", " ").split()[0]
     if partial == 'Meat,':
       partial = 'Protein'
     if partial == 'Fats':
       continue
     for fg in food_groups:
-      if partial in fg and row['Min per wk']:
+      if partial in fg and row['Min per week']:
         c = {
-          'adult man C': {'min': row['Min per wk'] / 7.0, 'max': row['Max per week'] / 7.0},
-          'adult women C': {'min': row['Min per wk_1'] / 7.0, 'max': row['Max per week_1'] / 7.0},
-          '14 boy C': {'min': row['Min per wk_2'] / 7.0, 'max': row['Max per week_2'] / 7.0},
-          '7 girl C': {'min': row['Min per wk_3'] / 7.0, 'max': row['Max per week_3'] / 7.0}
+          'adult man C': {'min': row['Min per week'] / 7.0, 'max': row['Max per week'] / 7.0},
+          'adult women C': {'min': row['Min per week_1'] / 7.0, 'max': row['Max per week_1'] / 7.0},
+          '14 boy C': {'min': row['Min per week_2'] / 7.0, 'max': row['Max per week_2'] / 7.0},
+          '7 girl C': {'min': row['Min per week_3'] / 7.0, 'max': row['Max per week_3'] / 7.0}
         }
+
         if 'constraints_serves' not in food_groups[fg]:
           continue
           food_groups[fg]['constraints_serves'] = c
@@ -263,7 +264,7 @@ food_groups['Starchy vegetables']['constraints_serves'].update({
 })
 
 for row in nutrientsSheet:
-  fid = int(row['Common food ID'])
+  fid = int(row['Commonly consumed food ID'])
   if fid not in food_ids:
     logger.warning("nutrition defined, but {} not known!".format(fid))
     continue
@@ -330,7 +331,7 @@ for row in nutrientsTargetsCSheet:
     try:
       f = float(value)
       if '(s)' in measure:
-        measure = measure.replace("vege", "Vegetables").replace(" (s)", "").capitalize()
+        measure = measure.replace("vege", "Vegetables").replace(" (s)+-30%", "").capitalize()
         if food_groups[measure]['constraints_serves'][p_strip][minormax] != f:
           logger.warning("Override {} {} for {} from {} to {}".format(measure, minormax, p_strip, food_groups[measure]['constraints_serves'][p_strip][minormax], f))
           food_groups[measure]['constraints_serves'][p_strip][minormax] = f
@@ -372,14 +373,14 @@ for food in foods:
     logger.error("{} doesn't have energy".format(food))
 
 for row in variableFoodPricesSheet:
-  if not row['Food Id']:
+  if not row['Commonly consumed food ID']:
     continue
-  if int(row['Food Id']) not in food_ids:
+  if int(row['Commonly consumed food ID']) not in food_ids:
     logger.warning("{} has a variable price but is not defined!".format(row['Food Id']))
     continue
-  if not row['price/100EP']:
+  if not row['price/100g AP']:
     continue
-  name = food_ids[int(row['Food Id'])]
+  name = food_ids[int(row['Commonly consumed food ID'])]
   foods[name]['variable prices'].append({
     'outlet type': row['outlet type'],
     'region': row['region'],
@@ -389,7 +390,7 @@ for row in variableFoodPricesSheet:
     'season': row['season'],
     'type': row['type'],
     'urban': 'urban' if row['urban'] == 'yes' else 'rural',
-    'price/100g': row['price/100EP'],
+    'price/100g': row['price/100g AP'],
     'year': int(row.get('year') or 0)
   })
 
