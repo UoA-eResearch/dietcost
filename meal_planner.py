@@ -229,7 +229,7 @@ for row in foodConstraintsCSheet:
         fg_header = 'Grains'
       elif partial == 'starchy':
         fg_header = 'Starchy vegetables'
-      elif partial == 'Sauces,':
+      elif partial == 'Sauces':
         fg_header = 'Sauces'
       elif partial == 'Protein':
         fg_header = 'Protein'
