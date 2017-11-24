@@ -339,7 +339,7 @@ for row in nutrientsTargetsCSheet:
         if measure == 'Energy MJ':
           measure = 'Energy kJ'
           f *= 1000
-        measure = measure.replace('% E CI', '% energy').replace('%E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('Sat Fat', 'Saturated fat').replace('alcohol', 'Alcohol').replace('Sodium', 'sodium').replace(" +-10%", "").replace("protein %", "protein % energy").replace("Alcohol", "Alcohol % energy").replace("grams", "g").replace('total', 'Total')
+        measure = measure.replace('% E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('Sat Fat', 'Saturated fat').replace('alcohol E%', 'Alcohol % energy').replace('Sodium', 'sodium').replace("+-30%", "").replace("protein %", "protein % energy").replace("grams", "g").replace('total', 'Total')
         if measure not in n:
           n[measure] = {}
         #if minormax == 'min':
