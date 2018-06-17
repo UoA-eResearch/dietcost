@@ -29,7 +29,7 @@ parser.add_argument('-a', '--alcohol', dest="alcohol", type=int, nargs='?', defa
 
 parser.add_argument("-v", "--verbose", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO, help="increase output verbosity")
 
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 logging.basicConfig(stream=sys.stdout, level=args.loglevel)
 logger = logging.getLogger('meal_planner')
