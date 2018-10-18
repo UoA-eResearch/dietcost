@@ -234,6 +234,7 @@ for row in foodConstraintsCSheet:
       elif partial == 'Protein':
         fg_header = 'Protein'
       foods[name]['Food group_C'] = fg_header
+    foods[name]['Variety_C'] = row['Variety']
   elif row['Food group']:
     fg_header = row['Food group'].strip()
     partial = fg_header.replace(",", " ").split()[0]
@@ -445,6 +446,11 @@ def get_fg_for_p(details, person):
     return details['Food group_C']
   return details['Food group']
 
+def get_v_for_p(details, person):
+  if person.endswith('C') and 'Variety_C' in details:
+    return details['Variety_C']
+  return details['Variety']
+
 # Generate a plan
 
 def get_nutrients(meal, person = ''):
@@ -508,7 +514,8 @@ def get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_siz
 
   for food, details in foods.items():
     try:
-      if details['Variety'] in allowed_varieties:
+      variety = get_v_for_p(details, person)
+      if variety in allowed_varieties:
         if get_fg_for_p(details, person) == 'Takeaway' and not allow_takeaways:
           continue
         if get_fg_for_p(details, person) == 'Alcohol' and selected_person_nutrient_targets['Alcohol % energy']['max'] == 0:
@@ -630,7 +637,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           for item, amount in meal.items():
             price = foods[item]['price/100g'] / 100 * amount
             total_price += price
-            varieties.append(foods[item]['Variety'])
+            variety = get_v_for_p(foods[item], person)
+            varieties.append(variety)
             amounts.append(amount)
 
             fg = foods[item]['Food group']
