@@ -136,7 +136,10 @@ nutrientsTargetsHSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets
 nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=24, limit=8)
 foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Healthy'), header=2)
 foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Current'), header=2)
-foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
+try:
+  foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
+except:
+  foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use '))
 variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
 
 f = "cpiprices.xlsx"
@@ -149,7 +152,7 @@ for row in foodsSheet:
   name = row['Commonly consumed food']
   if row['Food group'] == 'Sauces, dressings, spreads, sugars':
     row['Food group'] = 'Sauces'
-  elif row['Food group'] == 'Protein foods: Meat, poultry, seafood, eggs, legumes, nuts':
+  elif "Protein" in row['Food group']:
     row['Food group'] = 'Protein'
 
   row['redmeat'] = row['Commonly consumed food ID'] in ["05065", "05067", "05073", "05074", "05089"]
