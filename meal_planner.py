@@ -184,6 +184,7 @@ for row in foodConstraintsHSheet:
       pass
     if isStarchy:
       foods[name]['Food group'] = 'Starchy vegetables'
+    foods[name]['Variety'] = row['Variety']
   elif row['Commonly consumed food']:
     partial = row['Commonly consumed food'].split()[0]
     if partial == 'Meat,':
@@ -523,6 +524,7 @@ def get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_siz
         if get_fg_for_p(details, person) == 'Discretionary foods' and selected_person_nutrient_targets['Discretionary foods % energy']['max'] == 0:
           continue
         if 'price/100g' not in details:
+          logger.warning('not including {} due to missing price'.format(food))
           continue
         t = details['constraints'][person]
         r = list(np.arange(t['min'], t['max'], details['serve size'] * min_serve_size_difference))
@@ -532,6 +534,8 @@ def get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_siz
               continue
           meal[food] = random.choice(r)
           combinations *= len(r)
+      else:
+        logger.warning("not including {} as {} is not in allowed varieties {}".format(food, variety, allowed_varieties))
     except KeyError as e:
       logger.warning('not including {} due to missing {}'.format(food, e))
   return meal, combinations
