@@ -90,7 +90,7 @@ linked_foods = {
   'milk-cereal': {
      # The total number of serves of milk is higher than or equal to the total number of serves of breakfast cereals
     'lower': ["03046", "03047", "03048", "03065", "03068", "03050"], # cereal
-    'higher' : ["04059", "04060"], # milk
+    'higher' : ["04059", "04060", "04058", "04065", "04068"], # milk
   },
   'spread-bread': {
     # The total number of serves of spread is equal to or lower than the total number of serves of bread and crackers
