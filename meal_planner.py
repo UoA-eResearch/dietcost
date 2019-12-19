@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import xlrd
 import random
@@ -132,14 +132,15 @@ sheet_names = xl_workbook.sheet_names()
 
 foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
 nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
-nutrientsTargetsHSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=14, limit=8)
-nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=24, limit=8)
+nutrientsTargetsPFSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=28, limit=8)
+nutrientsTargetsPVSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=39, limit=8)
+nutrientsTargetsHSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=50, limit=8)
+nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=60, limit=8)
 foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Healthy'), header=2)
 foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Current'), header=2)
-try:
-  foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
-except:
-  foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use '))
+foodConstraintsPFSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Planetary_F'), header=2)
+foodConstraintsPVSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Planetary_V'), header=2)
+foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices to use'))
 variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
 
 f = "cpiprices.xlsx"
@@ -147,6 +148,10 @@ xl_workbook = xlrd.open_workbook(f)
 cpiPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
 
 variableFoodPricesSheet += cpiPricesSheet
+
+f = "NZ Food Emissions Database.xlsx"
+xl_workbook = xlrd.open_workbook(f)
+emissions = parse_sheet(xl_workbook.sheet_by_name('Excel Table S2'), header = 2)
 
 for row in foodsSheet:
   name = row['Commonly consumed food']
@@ -159,107 +164,93 @@ for row in foodsSheet:
 
   foods[name] = row
   foods[name]['variable prices'] = []
+  foods[name]["constraints"] = {}
   food_ids[int(row['Commonly consumed food ID'])] = name
 
   if row['Food group'] == ' Discretionary foods':
     row['Food group'] = 'Discretionary foods'
 
   if row['Food group'] not in food_groups:
-    food_groups[row['Food group']] = {}
-
-food_groups['Starchy vegetables'] = {}
-
-isStarchy = False
-
-for row in foodConstraintsHSheet:
-  if row['Commonly consumed food ID'] and int(row['Commonly consumed food ID']) in food_ids:
-    name = food_ids[int(row['Commonly consumed food ID'])]
-    # per week
-    foods[name]['constraints'] = {
-      '14 boy': {'min': float(row['Min per week_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
-      '7 girl': {'min': float(row['Min per week_3']) * 2, 'max': float(row['Max per week_3']) * 2 * MAX_SCALE},
-      'adult man': {'min': float(row['Min per week']) * 2, 'max': float(row['Max per week']) * 2 * MAX_SCALE},
-      'adult women': {'min': float(row['Min per week_1']) * 2, 'max': float(row['Max per week_1']) * 2 * MAX_SCALE}
+    food_groups[row['Food group']] = {
+      "constraints_serves": {}
     }
-    try:
-      foods[name]['serve size'] = int(row['serve size'])
-    except ValueError:
-      pass
-    if isStarchy:
-      foods[name]['Food group'] = 'Starchy vegetables'
-    foods[name]['Variety'] = row['Variety']
-  elif row['Commonly consumed food']:
-    partial = row['Commonly consumed food'].split()[0]
-    if partial == 'Meat,':
-      partial = 'Protein'
-    if partial == 'Fats' or partial == 'grams':
-      continue
-    if partial == 'Starchy':
-      isStarchy = True
-    else:
-      isStarchy = False
-    for fg in food_groups:
-      if partial in fg and row['Min per week']:
-        food_groups[fg]['constraints_serves'] = {
-          'adult man': {'min': row['Min per week'] / 7.0, 'max': row['Max per week'] / 7.0},
-          'adult women': {'min': row['Min per week_1'] / 7.0, 'max': row['Max per week_1'] / 7.0},
-          '14 boy': {'min': row['Min per week_2'] / 7.0, 'max': row['Max per week_2'] / 7.0},
-          '7 girl': {'min': row['Min per week_3'] / 7.0, 'max': row['Max per week_3'] / 7.0}
-        }
 
-for row in foodConstraintsCSheet:
-  if row['Commonly consumed food ID'] and int(row['Commonly consumed food ID']) in food_ids:
-    name = food_ids[int(row['Commonly consumed food ID'])]
-    # per week
-    c = {
-      '14 boy C': {'min': float(row['Min per week_2']) * 2, 'max': float(row['Max per week_2']) * 2 * MAX_SCALE},
-      '7 girl C': {'min': float(row['Min per week_3']) * 2, 'max': float(row['Max per week_3']) * 2 * MAX_SCALE},
-      'adult man C': {'min': float(row['Min per week']) * 2, 'max': float(row['Max per week']) * 2 * MAX_SCALE},
-      'adult women C': {'min': float(row['Min per week_1']) * 2, 'max': float(row['Max per week_1']) * 2 * MAX_SCALE}
-    }
-    if 'constraints' not in foods[name]:
-      # Uncomment this to default H constraints from C where missing in H
-      # h_defaults = dict([(k.strip(' C'), v) for k,v in c.items()])
-      # c.update(h_defaults)
-      foods[name]['constraints'] = c
-    else:
+for row in emissions:
+  if row["Match ID"]:
+    for fid in str(row["Match ID"]).split():
+      name = food_ids[int(float(fid))]
+      foods[name]["emissions"] = row
+
+food_groups['Starchy vegetables'] = {
+  "constraints_serves": {}
+}
+
+def parseFoodConstraints(sheet, suffix = ""):
+  isStarchy = False
+  for row in sheet:
+    # This row contains constraints for a given food item
+    if "Food ID" in row:
+      row["Commonly consumed food ID"] = row["Food ID"]
+    if "Food group" not in row or not row["Food group"]:
+      row["Food group"] = row["Commonly consumed food"]
+    if row['Commonly consumed food ID'] and int(row['Commonly consumed food ID']) in food_ids:
+      name = food_ids[int(row['Commonly consumed food ID'])]
+      # convert day to per week
+      c = {
+        'adult man' + suffix: {'min': float(row['Min per week'] or 0) * 2, 'max': float(row['Max per week'] or 0) * 2 * MAX_SCALE},
+        'adult women' + suffix: {'min': float(row['Min per week_1'] or 0) * 2, 'max': float(row['Max per week_1'] or 0) * 2 * MAX_SCALE},
+        '14 boy' + suffix: {'min': float(row['Min per week_2'] or 0) * 2, 'max': float(row['Max per week_2'] or 0) * 2 * MAX_SCALE},
+        '7 girl' + suffix: {'min': float(row['Min per week_3'] or 0) * 2, 'max': float(row['Max per week_3'] or 0) * 2 * MAX_SCALE},
+      }
       foods[name]['constraints'].update(c)
-    try:
-      foods[name]['serve size'] = int(row['serve size'])
-    except ValueError:
-      pass
-    if partial != 'Discretionary' and foods[name]['Food group'] == 'Discretionary foods':
-      if partial == 'Grains':
-        fg_header = 'Grains'
-      elif partial == 'starchy':
-        fg_header = 'Starchy vegetables'
-      elif partial == 'Sauces':
-        fg_header = 'Sauces'
-      elif partial == 'Protein':
-        fg_header = 'Protein'
-      foods[name]['Food group_C'] = fg_header
-    foods[name]['Variety_C'] = row['Variety']
-  elif row['Food group']:
-    fg_header = row['Food group'].strip()
-    partial = fg_header.replace(",", " ").split()[0]
-    if partial == 'Meat,':
-      partial = 'Protein'
-    if partial == 'Fats':
-      continue
-    for fg in food_groups:
-      if partial in fg and row['Min per week']:
-        c = {
-          'adult man C': {'min': row['Min per week'] / 7.0, 'max': row['Max per week'] / 7.0},
-          'adult women C': {'min': row['Min per week_1'] / 7.0, 'max': row['Max per week_1'] / 7.0},
-          '14 boy C': {'min': row['Min per week_2'] / 7.0, 'max': row['Max per week_2'] / 7.0},
-          '7 girl C': {'min': row['Min per week_3'] / 7.0, 'max': row['Max per week_3'] / 7.0}
-        }
+      try:
+        foods[name]['serve size'] = int(row['serve size'])
+      except ValueError:
+        pass
+      if isStarchy:
+        foods[name]['Food group'] = 'Starchy vegetables'
 
-        if 'constraints_serves' not in food_groups[fg]:
-          continue
-          food_groups[fg]['constraints_serves'] = c
-        else:
-          food_groups[fg]['constraints_serves'].update(c)
+      if suffix == " C":
+        foods[name]['Variety_C'] = row['Variety']
+        if partial != 'Discretionary' and foods[name]['Food group'] == 'Discretionary foods':
+          if partial == 'Grains':
+            fg_header = 'Grains'
+          elif partial == 'starchy':
+            fg_header = 'Starchy vegetables'
+          elif partial == 'Sauces':
+            fg_header = 'Sauces'
+          elif partial == 'Protein':
+            fg_header = 'Protein'
+          foods[name]['Food group_C'] = fg_header
+      else:
+        foods[name]['Variety'] = row['Variety']
+
+    # This row contains constraints for a given food group
+    elif row['Food group']:
+      # Use the first word to uniquely identify food group
+      fg_header = row['Food group'].strip()
+      partial = fg_header.replace(",", " ").split()[0]
+      if partial == 'Meat':
+        partial = 'Protein'
+      if partial == 'Fats' or partial == 'grams':
+        continue
+      if partial == 'Starchy':
+        isStarchy = True
+      else:
+        isStarchy = False
+      for fg in food_groups:
+        if partial in fg and row['Min per week']:
+          food_groups[fg]['constraints_serves'].update({
+            'adult man' + suffix: {'min': row['Min per week'] / 7.0, 'max': row['Max per week'] / 7.0},
+            'adult women' + suffix: {'min': row['Min per week_1'] / 7.0, 'max': row['Max per week_1'] / 7.0},
+            '14 boy' + suffix: {'min': row['Min per week_2'] / 7.0, 'max': row['Max per week_2'] / 7.0},
+            '7 girl' + suffix: {'min': row['Min per week_3'] / 7.0, 'max': row['Max per week_3'] / 7.0}
+          })
+
+parseFoodConstraints(foodConstraintsHSheet)
+parseFoodConstraints(foodConstraintsCSheet, " C")
+parseFoodConstraints(foodConstraintsPFSheet, " PF")
+parseFoodConstraints(foodConstraintsPVSheet, " PV")
 
 food_groups['Starchy vegetables']['constraints_serves'].update({
           'adult man C': {'min': 0, 'max': 100},
@@ -284,79 +275,51 @@ for row in nutrientsSheet:
   name = food_ids[fid]
   foods[name]['nutrition'] = floats
 
-for row in nutrientsTargetsHSheet:
-  p = row['Healthy diet per day']
-  p_strip = p.replace('aduilt', 'adult').replace(' min', '').replace(' max', '').replace('woman', 'women')
-  n = nutrient_targets.get(p_strip, {})
-  if 'min' in p:
-    minormax = 'min'
-  elif 'max' in p:
-    minormax = 'max'
+def parseNutrientTargets(sheet, suffix = ""):
+  for row in sheet:
+    personkey = [k for k in row.keys() if "diet per day" in k][0]
+    p = row[personkey]
+    p_strip = p.replace('aduilt', 'adult').replace(' min', '').replace(' max', '').replace('woman', 'women') + suffix
+    n = nutrient_targets.get(p_strip, {})
+    if 'min' in p:
+      minormax = 'min'
+    elif 'max' in p:
+      minormax = 'max'
 
-  for measure, value in row.items():
-    if 'grams' in measure and measure != 'fibre grams':
-      continue
-    try:
-      if value == "max":
-        value = 100
-      f = float(value)
-      if '(s)' in measure:
-        measure = measure.replace("vege", "Vegetables").replace(" (s)", "").capitalize()
-        if food_groups[measure]['constraints_serves'][p_strip][minormax] != f:
-          logger.warning("Override {} {} for {} from {} to {}".format(measure, minormax, p_strip, food_groups[measure]['constraints_serves'][p_strip][minormax], f))
-          food_groups[measure]['constraints_serves'][p_strip][minormax] = f
-      else:
-        if measure == 'Energy MJ':
-          measure = 'Energy kJ'
-          f *= 1000
-        measure = measure.replace("carb%", "CHO % energy").replace("fat %", "Fat % energy").replace("sat Fat", "Saturated fat").replace("protein %", "protein % energy").replace("grams", "g")
-        if measure not in n:
-          n[measure] = {}
-        n[measure][minormax] = f
-    except ValueError:
-      pass
-  n["Discretionary foods % energy"] = {'min': 0, 'max': args.discretionary}
-  n["Alcohol % energy"] = {'min': 0, 'max': args.alcohol}
-  n["Total sugars % energy"] = {'min': 0, 'max': 100}
-#  n['fibre g']['max'] = n['fibre g']['min'] * 4
-  nutrient_targets[p_strip] = n
+    for measure, value in row.items():
+      if 'grams' in measure and measure != 'fibre grams':
+        continue
+      try:
+        if value == "max":
+          value = 100
+        f = float(value)
+        if '(s)' in measure:
+          measure = measure.replace("vege", "Vegetables").replace(" (s)", "").replace("+-30%", "").replace("dairy", "Dairy/alternatives").capitalize()
+          if food_groups[measure]['constraints_serves'][p_strip][minormax] != f:
+            logger.warning("Override {} {} for {} from {} to {}".format(measure, minormax, p_strip, food_groups[measure]['constraints_serves'][p_strip][minormax], f))
+            food_groups[measure]['constraints_serves'][p_strip][minormax] = f
+        else:
+          if measure == 'Energy MJ':
+            measure = 'Energy kJ'
+            f *= 1000
+          measure = measure.replace("carb%", "CHO % energy").replace("fat %", "Fat % energy").replace("sat Fat", "Saturated fat").replace("protein %", "protein % energy").replace("grams", "g")
+          measure = measure.replace('% E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('Sat Fat', 'Saturated fat').replace('alcohol E%', 'Alcohol % energy').replace('Sodium', 'sodium').replace("+-30%", "").replace("protein %", "protein % energy").replace("grams", "g").replace('total', 'Total').strip()
+          if measure not in n:
+            n[measure] = {}
+          n[measure][minormax] = f
+      except ValueError:
+        pass
+    n["Discretionary foods % energy"] = {'min': 0, 'max': args.discretionary}
+    n["Alcohol % energy"] = {'min': 0, 'max': args.alcohol}
+    if "Total sugars % energy" not in n:
+      n["Total sugars % energy"] = {'min': 0, 'max': 100}
+  #  n['fibre g']['max'] = n['fibre g']['min'] * 4
+    nutrient_targets[p_strip] = n
 
-for row in nutrientsTargetsCSheet:
-  p = row['Nutrient constraints                      Current diet per day']
-  p_strip = p.replace('aduilt', 'adult').replace(' min', '').replace(' max', '').replace('woman', 'women') + ' C'
-  n = nutrient_targets.get(p_strip, {})
-  if 'min' in p:
-    minormax = 'min'
-  elif 'max' in p:
-    minormax = 'max'
-
-  for measure, value in row.items():
-    if 'grams' in measure and measure != 'fibre grams':
-      continue
-    try:
-      f = float(value)
-      if '(s)' in measure:
-        measure = measure.replace("vege", "Vegetables").replace(" (s)+-30%", "").capitalize()
-        if food_groups[measure]['constraints_serves'][p_strip][minormax] != f:
-          logger.warning("Override {} {} for {} from {} to {}".format(measure, minormax, p_strip, food_groups[measure]['constraints_serves'][p_strip][minormax], f))
-          food_groups[measure]['constraints_serves'][p_strip][minormax] = f
-      else:
-        if measure == 'Energy MJ':
-          measure = 'Energy kJ'
-          f *= 1000
-        measure = measure.replace('% E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('Sat Fat', 'Saturated fat').replace('alcohol E%', 'Alcohol % energy').replace('Sodium', 'sodium').replace("+-30%", "").replace("protein %", "protein % energy").replace("grams", "g").replace('total', 'Total').strip()
-        if measure not in n:
-          n[measure] = {}
-        #if minormax == 'min':
-        #  f *= .9
-        #else:
-        #  f *= 1.1
-        n[measure][minormax] = f
-    except ValueError:
-      pass
-  n["Discretionary foods % energy"] = {'min': 0, 'max': args.discretionary}
-  n["Alcohol % energy"] = {'min': 0, 'max': args.alcohol}
-  nutrient_targets[p_strip] = n
+parseNutrientTargets(nutrientsTargetsHSheet)
+parseNutrientTargets(nutrientsTargetsCSheet, " C")
+parseNutrientTargets(nutrientsTargetsPFSheet, " PF")
+parseNutrientTargets(nutrientsTargetsPVSheet, " PV")
 
 for row in foodPricesSheet:
   try:
@@ -389,7 +352,7 @@ for row in variableFoodPricesSheet:
   foods[name]['variable prices'].append({
     'outlet type': row['outlet type'],
     'region': row['region'],
-    'deprivation': int(row['deprivation'] or 0),
+    #'deprivation': int(row['deprivation'] or 0),
     'discount': 'discount' if row['discount'] == 'yes' else 'non-discount',
     'population group': row['population group'],
     'season': row['season'],
@@ -417,9 +380,10 @@ for food in foods:
     vp_combos.add(vp_id)
     if vp_id not in vp_by_id:
       vp_by_id[vp_id] = []
-    vp_by_id[vp_id].append(entry['price/100g'])
+    if type(entry["price/100g"]) == float:
+      vp_by_id[vp_id].append(entry['price/100g'])
   for vp, entries in vp_by_id.items():
-    vp_by_id[vp] = sum(entries) / len(entries)
+    vp_by_id[vp] = np.mean(entries)
   foods[food]['variable prices'] = vp_by_id
 
 for food in foods:
