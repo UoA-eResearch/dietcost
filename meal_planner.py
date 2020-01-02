@@ -155,6 +155,9 @@ emissions = parse_sheet(xl_workbook.sheet_by_name('Excel Table S2'), header = 2)
 
 for row in foodsSheet:
   name = row['Commonly consumed food']
+  if not name:
+    print("Missing name on row:", row)
+    exit(1)
   if row['Food group'] == 'Sauces, dressings, spreads, sugars':
     row['Food group'] = 'Sauces'
   elif "Protein" in row['Food group']:
@@ -378,12 +381,13 @@ for food in foods:
         variable_prices[v].append(entry[v])
     vp_id = '_'.join([str(entry[k]) for k in sorted(entry.keys()) if k != 'price/100g'])
     vp_combos.add(vp_id)
-    if vp_id not in vp_by_id:
-      vp_by_id[vp_id] = []
     if type(entry["price/100g"]) == float:
+      if vp_id not in vp_by_id:
+        vp_by_id[vp_id] = []
       vp_by_id[vp_id].append(entry['price/100g'])
   for vp, entries in vp_by_id.items():
-    vp_by_id[vp] = np.mean(entries)
+    if entries:
+      vp_by_id[vp] = np.mean(entries)
   foods[food]['variable prices'] = vp_by_id
 
 for food in foods:

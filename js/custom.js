@@ -3,7 +3,7 @@ $(document).ready(function() {
     return Math.round(float * 100) / 100;
   }
   function get_machine_name(name) {
-    return name.replace(/[ %*&()]+/g, '_');
+    return name.replace(/[ %*&()\/]+/g, '_');
   }
   function validate(min, max) {
     min = parseFloat(min);
@@ -153,8 +153,8 @@ $(document).ready(function() {
         var display_name = name.charAt(0).toUpperCase() + name.slice(1) + ' serves';
         var defaults = constraints['constraints_serves']['adult man'];
         if (!defaults) {
-          console.error("No " + name + " defined for adult man!");
-          return;
+          console.warn("No " + name + " defined for adult man!");
+          defaults = {min: 0, max: 100}
         }
         $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + display_name + '</p><div class="input-field col s2"><input name="fg_' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="fg_' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
         var slider = $('#' + machine_name + ' div.slider')[0];
