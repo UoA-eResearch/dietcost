@@ -308,8 +308,10 @@ def parseNutrientTargets(sheet, suffix = ""):
           if measure == 'Energy MJ':
             measure = 'Energy kJ'
             f *= 1000
-          measure = measure.replace("carb%", "CHO % energy").replace("fat %", "Fat % energy").replace("sat Fat", "Saturated fat").replace("protein %", "protein % energy").replace("grams", "g")
-          measure = measure.replace('% E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('Sat Fat', 'Saturated fat').replace('alcohol E%', 'Alcohol % energy').replace('Sodium', 'sodium').replace("+-30%", "").replace("protein %", "protein % energy").replace("grams", "g").replace('total', 'Total').strip()
+          if measure == "fat %":
+            measure = "Fat % energy"
+          measure = measure.replace("carb%", "CHO % energy").replace("sat Fat", "Saturated fat").replace("protein %", "protein % energy").replace("grams", "g")
+          measure = measure.replace('% E CI', '% energy').replace(' CI', '').replace('Sat Fat', 'Saturated fat').replace('alcohol E%', 'Alcohol % energy').replace('Sodium', 'sodium').replace("+-30%", "").replace("grams", "g").replace('total', 'Total').strip()
           if measure not in n:
             n[measure] = {}
           n[measure][minormax] = f
@@ -326,6 +328,7 @@ parseNutrientTargets(nutrientsTargetsHSheet)
 parseNutrientTargets(nutrientsTargetsCSheet, " C")
 parseNutrientTargets(nutrientsTargetsPFSheet, " PF")
 parseNutrientTargets(nutrientsTargetsPVSheet, " PV")
+
 
 for row in foodPricesSheet:
   try:
