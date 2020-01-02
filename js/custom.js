@@ -539,11 +539,19 @@ $(document).ready(function() {
             var d = o.per_group[k];
             fgSum += "<tr class='" + get_machine_name(k) + "'><td>" + k + "</td><td>" + round(d['amount']) + "g</td><td>$<span class='price'>" + round(d['price']) + "</span></td><td>" + round(d['serves']) + "</td></tr>";
           }
+          var eSum = "";
+          var keys = Object.keys(o.emissions).sort();
+          for (var i in keys) {
+            var k = keys[i];
+            var d = o.emissions[k];
+            eSum += "<tr><td>" + k + "</td><td>" + round(d) + "</td></tr>";
+          }
           var table = "<table class='highlight bordered'><thead><tr><th data-field='name'>Name</th><th data-field='amount'>Amount</th></tr></thead><tbody>" + items + "</tbody></table>";
           var collapsibleTable = "<ul class='collapsible' data-collapsible='accordion'><li><div class='collapsible-header'><i class='material-icons'>receipt</i>Items</div><div class='collapsible-body'>" + table + "</div></li></ul>";
           var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
+          var emissionsTable = "<h4>Emissions breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Emissions (kgCO2e)</th></tr></thead>" + eSum + "</table>";
           var summary = "<p class='priceWrapper'>Price: $<span class='totalPrice'>" + round(o.price) + "</span></p><p class='variety'>Variety: " + round(o.variety) + "</p>";
-          var card = "<div id='" + hash + "' class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'>" + foodGroupTable + "<br>" + summary + "</div></div></div>";
+          var card = "<div id='" + hash + "' class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'>" + foodGroupTable + "<br>" + emissionsTable + "<br>" + summary + "</div></div></div>";
           $('#meal_plans').append(card);
         }
         $('.collapsible').collapsible();

@@ -178,6 +178,9 @@ for row in foodsSheet:
       "constraints_serves": {}
     }
 
+# kgCO2e/kg
+emissions_keys = ['Farming & processing (100-year GWP)', 'Farming & processing (20-year GWP)', 'Transit packaging', 'Consumer packaging', 'Transport', 'Warehouse/ distribution', 'Refrigeration', 'Overheads', '100-year GWP', '20-year GWP']
+
 for row in emissions:
   if row["Match ID"]:
     for fid in str(row["Match ID"]).split():
@@ -609,12 +612,19 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           total_price = 0
           varieties = []
           amounts = []
+          emissions = dict([(k, 0) for k in emissions_keys])
           for item, amount in meal.items():
             price = foods[item]['price/100g'] / 100 * amount
             total_price += price
             variety = get_v_for_p(foods[item], person)
             varieties.append(variety)
             amounts.append(amount)
+
+            if "emissions" not in foods[item]:
+              logger.warning("No emissions data for " + item)
+            else:
+              for k in emissions_keys:
+                emissions[k] += foods[item]["emissions"][k] / 1000 * amount
 
             fg = foods[item]['Food group']
             per_group[fg]['amount'] += amount
@@ -637,7 +647,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
             vp_keys_effecting.update(per_group[fg]['variable prices'].keys())
 
           variety = np.average(varieties, weights=amounts)
-          meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variable prices': copy.copy(vp_dict), 'nutrition': copy.copy(nutrients), 'variety': variety, 'per_group': copy.copy(per_group)}
+          meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variable prices': copy.copy(vp_dict), 'nutrition': copy.copy(nutrients), 'variety': variety, 'per_group': copy.copy(per_group), "emissions": emissions}
           logger.info('Hit!')
           meal, combinations = get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways)
     else:
@@ -840,7 +850,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       [x + ' ' + y for x in food_groups for y in ['amount', 'price', 'serves']] +
       [v for k,v in targetmap.items()] +
       [k + ' price' for k in vp_keys_effecting] +
-      [x + ' ' + y + ' price' for x in food_groups for y in vp_keys_effecting]
+      [x + ' ' + y + ' price' for x in food_groups for y in vp_keys_effecting] +
+      emissions_keys
     )
     for h,m in meal_plans.items():
       writer.writerow(
@@ -849,7 +860,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         [m['per_group'][x][y] for x in food_groups for y in ['amount', 'price', 'serves']] +
         [m['nutrition'][k] for k,v in targetmap.items()] +
         [m['variable prices'].get(k, m['price']) for k in vp_keys_effecting] +
-        [m['per_group'][x]['variable prices'].get(y, m['per_group'][x]['price']) for x in food_groups for y in vp_keys_effecting]
+        [m['per_group'][x]['variable prices'].get(y, m['per_group'][x]['price']) for x in food_groups for y in vp_keys_effecting] +
+        [m["emissions"][k] for k in emissions_keys]
       )
   e = time.time()
   logger.info('write done, took {}s'.format(e-s))
