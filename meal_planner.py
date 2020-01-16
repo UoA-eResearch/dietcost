@@ -27,6 +27,7 @@ parser.set_defaults(allow_takeaways=True)
 parser.add_argument('-disc', '--discretionary', dest="discretionary", type=int, nargs='?', default=100, help='Maximum percentage of discretionary foods')
 parser.add_argument('-a', '--alcohol', dest="alcohol", type=int, nargs='?', default=100, help='Maximum percentage of Alcohol')
 
+parser.add_argument("-q", "--quiet", action="store_const", dest="loglevel", const=logging.ERROR, default=logging.INFO, help="decrease output verbosity")
 parser.add_argument("-v", "--verbose", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO, help="increase output verbosity")
 
 args, unknown = parser.parse_known_args()
@@ -142,6 +143,7 @@ foodConstraintsPFSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Plan
 foodConstraintsPVSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Planetary_V'), header=2)
 foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices to use'))
 variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
+foodWasteSheet = parse_sheet(xl_workbook.sheet_by_name('food waste'))
 
 f = "cpiprices.xlsx"
 xl_workbook = xlrd.open_workbook(f)
@@ -186,6 +188,14 @@ for row in emissions:
     for fid in str(row["Match ID"]).split():
       name = food_ids[int(float(fid))]
       foods[name]["emissions"] = row
+
+for row in foodWasteSheet:
+  if row["Commonly consumed food ID"]:
+    name = food_ids[int(row["Commonly consumed food ID"])]
+    try:
+      foods[name]["waste_multiplier"] = float(row["food waste multiple (avoidable)"])
+    except ValueError:
+      pass
 
 food_groups['Starchy vegetables'] = {
   "constraints_serves": {}
@@ -630,7 +640,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
               logger.warning("No emissions data for " + item)
             else:
               for k in emissions_keys:
-                emissions[k] += foods[item]["emissions"][k] / 1000 * amount
+                emissions[k] += foods[item]["emissions"][k] / 1000 * amount * foods[item].get("waste_multiplier", 1)
 
             fg = foods[item]['Food group']
             per_group[fg]['amount'] += amount
