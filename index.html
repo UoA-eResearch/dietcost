@@ -58,12 +58,25 @@
       
       <form id="nutritional_constraints" action="#">
         <div class="row">
-          <div class="input-field col s6 offset-s3">
+          <div class="input-field col s3 offset-s3">
             <i class="material-icons prefix">account_circle</i>
             <select id="person" name="person" class="validate" required>
-              <option value="" disabled selected>Choose your option</option>
+              <option value="14 boy">14-year-old boy</option>
+              <option value="7 girl">7-year-old girl</option>
+              <option value="adult man" selected>adult man</option>
+              <option value="adult women">adult woman</option>
             </select>
             <label>Persona</label>
+          </div>
+          <div class="input-field col s3">
+            <i class="material-icons prefix">fastfood</i>
+            <select id="diet" name="diet" class="validate" required>
+              <option value="" selected>Healthy</option>
+              <option value="C">Current</option>
+              <option value="PF">Planetary Flexitarian</option>
+              <option value="PV">Planetary Vegan</option>
+            </select>
+            <label>Diet</label>
           </div>
         </div>
         <div id="dynamic_fields" class="row"></div>

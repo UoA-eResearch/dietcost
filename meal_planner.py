@@ -578,9 +578,12 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         # Check link constraints
         per_link = dict([(name, {'lsum': 0, 'hsum': 0, 'low': [], 'high': []}) for name in linked_foods])
 
+        per_item_serves = {}
+
         for item, amount in meal.items():
           fg = get_fg_for_p(foods[item], person)
           serves = amount / foods[item]['serve size']
+          per_item_serves[item] = serves
           per_group[fg]['serves'] += serves
           fid = foods[item]['Commonly consumed food ID']
           for name, link in linked_foods.items():
@@ -650,7 +653,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
             vp_keys_effecting.update(per_group[fg]['variable prices'].keys())
 
           variety = np.average(varieties, weights=amounts)
-          meal_plans[h] = {'meal': copy.copy(meal), 'price': total_price, 'variable prices': copy.copy(vp_dict), 'nutrition': copy.copy(nutrients), 'variety': variety, 'per_group': copy.copy(per_group), "emissions": emissions}
+          meal_plans[h] = {'meal': copy.copy(meal), 'serves': copy.copy(per_item_serves), 'price': total_price, 'variable prices': copy.copy(vp_dict), 'nutrition': copy.copy(nutrients), 'variety': variety, 'per_group': copy.copy(per_group), "emissions": emissions}
           logger.info('Hit!')
           meal, combinations = get_random_meal_plan(person, selected_person_nutrient_targets, min_serve_size_difference, allowed_varieties, allow_takeaways)
     else:

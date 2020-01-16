@@ -98,16 +98,12 @@ $(document).ready(function() {
           createSlider(slider, name, machine_name, defaults)
         });
       }
-      var person_display = person.replace('7 girl', '7-year-old girl').replace('adult women', 'adult woman').replace('14 boy', '14-year-old boy');
-      if (!person_display.endsWith('C')) {
-        person_display += ' H';
-      }
-      $('#person').append("<option " + selected + " value='" + person + "'>" + person_display + "</option>")
     }
     $('select').material_select();
     Materialize.updateTextFields();
-    $('#person').change(function (e) {
-      var p = $(this).val();
+    $('#person,#diet').change(function (e) {
+      var p = $('#person').val() + ' ' + $('#diet').val();
+      console.log(p);
       var new_defaults = window.nutritional_targets[p];
       for (var name in new_defaults) {
         var defaults = new_defaults[name];
@@ -530,7 +526,8 @@ $(document).ready(function() {
           for (var i in keys) {
             var k = keys[i];
             var amount = o.meal[k];
-            items += "<tr><td>" + k + "</td><td>" + round(amount) + "g</td></tr>";
+            var serves = o.serves[k];
+            items += "<tr><td>" + k + "</td><td>" + round(amount) + "g</td><td>" + round(serves) + "</td></tr>";
           }
           var fgSum = "";
           var keys = Object.keys(o.per_group).sort();
@@ -544,9 +541,12 @@ $(document).ready(function() {
           for (var i in keys) {
             var k = keys[i];
             var d = o.emissions[k];
+            if (k == "100-year GWP" || k == "20-year GWP") {
+              k = "<u style='text-decoration: underline double;'>" + k + "</u>";
+            }
             eSum += "<tr><td>" + k + "</td><td>" + round(d) + "</td></tr>";
           }
-          var table = "<table class='highlight bordered'><thead><tr><th data-field='name'>Name</th><th data-field='amount'>Amount</th></tr></thead><tbody>" + items + "</tbody></table>";
+          var table = "<table class='highlight bordered'><thead><tr><th data-field='name'>Name</th><th data-field='amount'>Amount</th><th data-field='serves'>Serves</th></tr></thead><tbody>" + items + "</tbody></table>";
           var collapsibleTable = "<ul class='collapsible' data-collapsible='accordion'><li><div class='collapsible-header'><i class='material-icons'>receipt</i>Items</div><div class='collapsible-body'>" + table + "</div></li></ul>";
           var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
           var emissionsTable = "<h4>Emissions breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Emissions (kgCO2e)</th></tr></thead>" + eSum + "</table>";
@@ -590,6 +590,7 @@ $(document).ready(function() {
       }
     });
     console.log(variables);
+    variables.persona = variables.person + " " + variables.diet;
     get_meal_plans(variables);
   });
   $('.modal-trigger').leanModal();
