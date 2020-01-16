@@ -153,7 +153,7 @@ variableFoodPricesSheet += cpiPricesSheet
 
 f = "NZ Food Emissions Database.xlsx"
 xl_workbook = xlrd.open_workbook(f)
-emissions = parse_sheet(xl_workbook.sheet_by_name('Excel Table S2'), header = 2)
+emissions = parse_sheet(xl_workbook.sheet_by_name('database_common_foods'), header = 2)
 
 for row in foodsSheet:
   name = row['Commonly consumed food']
@@ -191,7 +191,10 @@ for row in emissions:
 
 for row in foodWasteSheet:
   if row["Commonly consumed food ID"]:
-    name = food_ids[int(row["Commonly consumed food ID"])]
+    try:
+      name = food_ids[int(row["Commonly consumed food ID"])]
+    except:
+      logger.warning("{} in food waste sheet not known".format(row["Commonly consumed food ID"]))
     try:
       foods[name]["waste_multiplier"] = float(row["food waste multiple (avoidable)"])
     except ValueError:
@@ -211,6 +214,8 @@ def parseFoodConstraints(sheet, suffix = ""):
       row["Food group"] = row["Commonly consumed food"]
     if row['Commonly consumed food ID'] and int(row['Commonly consumed food ID']) in food_ids:
       name = food_ids[int(row['Commonly consumed food ID'])]
+      if row["Commonly consumed food"] != name:
+        logger.warning("name mismatch: name in {} sheet {} != name in common foods sheet {}".format(suffix, row["Commonly consumed food"], name))
       # convert day to per week
       c = {
         'adult man' + suffix: {'min': float(row['Min per week'] or 0) * 2, 'max': float(row['Max per week'] or 0) * 2 * MAX_SCALE},
@@ -363,7 +368,7 @@ for row in variableFoodPricesSheet:
   if not row['Commonly consumed food ID']:
     continue
   if int(row['Commonly consumed food ID']) not in food_ids:
-    logger.warning("{} has a variable price but is not defined!".format(row['Food Id']))
+    logger.warning("{} has a variable price but is not defined!".format(row['Commonly consumed food ID']))
     continue
   if not row['price/100g AP']:
     continue
