@@ -711,6 +711,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       for item in meal:
         if get_fg_for_p(foods[item], person) == target_fg:
           foods_that_impact_this_measure.append(item)
+      if not foods_that_impact_this_measure:
+        raise ValueError("No foods impact {}!".format(target_fg))
       food = random.choice(foods_that_impact_this_measure)
       t = foods[food]['constraints'][person]
       if v > c['max']:
