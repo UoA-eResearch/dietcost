@@ -26,6 +26,7 @@ parser.set_defaults(allow_takeaways=True)
 
 parser.add_argument('-disc', '--discretionary', dest="discretionary", type=int, nargs='?', default=100, help='Maximum percentage of discretionary foods')
 parser.add_argument('-a', '--alcohol', dest="alcohol", type=int, nargs='?', default=100, help='Maximum percentage of Alcohol')
+parser.add_argument('-om', '--override-min', dest="override_min", type=int, nargs='?', default=None, help='Override minimum quantity for all food items')
 
 parser.add_argument("-q", "--quiet", action="store_const", dest="loglevel", const=logging.ERROR, default=logging.INFO, help="decrease output verbosity")
 parser.add_argument("-v", "--verbose", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO, help="increase output verbosity")
@@ -186,8 +187,11 @@ emissions_keys = ['Farming & processing (100-year GWP)', 'Farming & processing (
 for row in emissions:
   if row["Match ID"]:
     for fid in str(row["Match ID"]).split():
-      name = food_ids[int(float(fid))]
-      foods[name]["emissions"] = row
+      try:
+        name = food_ids[int(float(fid))]
+        foods[name]["emissions"] = row
+      except:
+        logger.warning(f"{fid} in emissions sheet not known")
 
 for row in foodWasteSheet:
   if row["Commonly consumed food ID"]:
@@ -223,6 +227,10 @@ def parseFoodConstraints(sheet, suffix = ""):
         '14 boy' + suffix: {'min': float(row['Min per week_2'] or 0) * 2, 'max': float(row['Max per week_2'] or 0) * 2 * MAX_SCALE},
         '7 girl' + suffix: {'min': float(row['Min per week_3'] or 0) * 2, 'max': float(row['Max per week_3'] or 0) * 2 * MAX_SCALE},
       }
+      if args.override_min != None:
+        logger.warning(f"Override {name} min to {args.override_min}")
+        for person in c:
+          c[person]["min"] = args.override_min
       foods[name]['constraints'].update(c)
       try:
         foods[name]['serve size'] = int(row['serve size'])
