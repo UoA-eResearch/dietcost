@@ -765,6 +765,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   # Calculate statistics
   prices = [m['price'] for h,m in meal_plans.items()]
   varieties = [m['variety'] for h,m in meal_plans.items()]
+  em100 = [m["emissions"]["100-year GWP"] for h,m in meal_plans.items()]
+  em20 = [m["emissions"]["20-year GWP"] for h,m in meal_plans.items()]
   stats = {'total_meal_plans': len(meal_plans)}
   if prices and varieties:
     stats = {
@@ -778,6 +780,18 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
         'min': min(varieties),
         'max': max(varieties),
         'mean': sum(varieties) / len(varieties)
+      },
+      'emissions': {
+        "100-year GWP": {
+          "min": min(em100),
+          "max": max(em100),
+          "mean": sum(em100) / len(em100)
+        },
+        "20-year GWP": {
+          "min": min(em20),
+          "max": max(em20),
+          "mean": sum(em20) / len(em20)
+        }
       },
       'total_meal_plans': len(meal_plans),
       'per_group': {},

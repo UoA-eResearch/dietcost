@@ -557,7 +557,7 @@ $(document).ready(function() {
         $('.collapsible').collapsible();
         var summary = "Total meal plans: " + data.stats.total_meal_plans + ". ";
         if (data.stats.total_meal_plans) {
-          summary += "Average price: $<span id='price'>" + round(data.stats.price.mean) + "</span>. Average variety: " + round(data.stats.variety.mean) + ". ";
+          summary += "Average price: $<span id='price'>" + round(data.stats.price.mean) + "</span>. Average variety: " + round(data.stats.variety.mean) + ". Average 100-year GWP: " + round(data.stats.emissions["100-year GWP"].mean) + ". Average 20-year GWP: " + round(data.stats.emissions["20-year GWP"].mean);
         }
         summary += "<a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv' download><i class='material-icons left'>play_for_work</i>Download as csv</a>";
         $('#summary').html(summary);
