@@ -580,6 +580,9 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   if len(meal) == 0:
     logger.error("0 items in menu!!!")
   logger.info('{} items in menu. {}E+{} distinct possible menus'.format(len(meal), comb_str[0], len(comb_str)-1))
+
+  iterations_spent_optimising_constraint = {}
+
   # Iteratively improve
 
   for i in range(iteration_limit):
@@ -713,9 +716,14 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       if diff[target_measure] > 0:
         logger.debug("We're too high on {} - {} > {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['max']))
         r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * min_serve_size_difference))[-10:]
+        target_measure += "_too_high"
       else:
         logger.debug("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))[:10]
+        target_measure += "_too_low"
+      if target_measure not in iterations_spent_optimising_constraint:
+        iterations_spent_optimising_constraint[target_measure] = 0
+      iterations_spent_optimising_constraint[target_measure] += 1
       logger.debug('{} has {} {} and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[food]['nutrition'][reverse_target_measure], reverse_target_measure, t['min'], t['max'], r, meal[food]))
     elif target_fg:
       c = selected_person_food_group_serve_targets[target_fg]
@@ -731,11 +739,19 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       if v > c['max']:
         logger.debug("Food group {} has too many serves - {} > {}".format(target_fg,v,c['max']))
         r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * min_serve_size_difference))
+        target_fg += "_too_high"
       elif v < c['min']:
         logger.debug("Food group {} has too few serves - {} < {}".format(target_fg,v,c['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))
+        target_fg += "too_low"
+      if target_fg not in iterations_spent_optimising_constraint:
+        iterations_spent_optimising_constraint[target_fg] = 0
+      iterations_spent_optimising_constraint[target_fg] += 1
       logger.debug('{} has {} serves and must be between {}g-{}g. Options {} - current {}g'.format(food, foods[item]['serve size'], t['min'], t['max'], r, meal[food]))
     elif target_link:
+      if target_link not in iterations_spent_optimising_constraint:
+        iterations_spent_optimising_constraint[target_link] = 0
+      iterations_spent_optimising_constraint[target_link] += 1
       link = per_link[target_link]
       direction = random.choice(['<', '>'])
       if direction == '<':
@@ -761,6 +777,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       meal[food] = new_val
 
   logger.info('last meal: {}\nnutritional diff: {}\nnutrients: {}'.format(pprint.pformat(meal), pprint.pformat(diff), pprint.pformat(nutrients)))
+  logger.info("iterations_spent_optimising_constraint: {}".format(pprint.pformat(iterations_spent_optimising_constraint)))
 
   # Calculate statistics
   prices = [m['price'] for h,m in meal_plans.items()]
