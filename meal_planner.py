@@ -700,7 +700,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
           elif target_measure == 'Discretionary foods % energy':
             if get_fg_for_p(foods[item], person) == 'Discretionary foods':
               foods_that_impact_this_measure.append(item)
-          elif target_measure == 'Red meat g':
+          elif target_measure == 'red meat (g)':
             if foods[item]['redmeat']:
               foods_that_impact_this_measure.append(item)
           elif foods[item]['nutrition'][reverse_target_measure] != 0:
