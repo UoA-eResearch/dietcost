@@ -743,7 +743,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       elif v < c['min']:
         logger.debug("Food group {} has too few serves - {} < {}".format(target_fg,v,c['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))
-        target_fg += "too_low"
+        target_fg += "_too_low"
       if target_fg not in iterations_spent_optimising_constraint:
         iterations_spent_optimising_constraint[target_fg] = 0
       iterations_spent_optimising_constraint[target_fg] += 1

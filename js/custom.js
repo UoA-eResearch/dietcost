@@ -27,6 +27,7 @@ $(document).ready(function() {
   }
   function createSlider(slider, name, machine_name, defaults) {
     var range = {'min': 0, 'max': defaults.max * 2} // range to choose from
+    if (range.min == range.max) range.max = range.max + 100;
     if (name.indexOf('%') !== -1) {
       range = {'min': 0, 'max': 100}
     }
