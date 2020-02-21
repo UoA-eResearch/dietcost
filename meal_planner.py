@@ -261,7 +261,7 @@ def parseFoodConstraints(sheet, suffix = ""):
       partial = fg_header.replace(",", " ").split()[0]
       if partial == 'Meat':
         partial = 'Protein'
-      if partial == 'Fats' or partial == 'grams':
+      if partial == 'grams':
         continue
       if partial == 'Starchy':
         isStarchy = True
