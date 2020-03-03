@@ -268,7 +268,7 @@ def parseFoodConstraints(sheet, suffix = ""):
       else:
         isStarchy = False
       for fg in food_groups:
-        if partial in fg and row['Min per week']:
+        if partial in fg and type(row["Min per week"]) == float:
           food_groups[fg]['constraints_serves'].update({
             'adult man' + suffix: {'min': row['Min per week'] / 7.0, 'max': row['Max per week'] / 7.0},
             'adult women' + suffix: {'min': row['Min per week_1'] / 7.0, 'max': row['Max per week_1'] / 7.0},
