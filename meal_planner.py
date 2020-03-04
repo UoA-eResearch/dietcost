@@ -716,11 +716,11 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       if diff[target_measure] > 0:
         logger.debug("We're too high on {} - {} > {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['max']))
         r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * min_serve_size_difference))[-10:]
-        target_measure += "_too_high"
+        target_measure += " too high"
       else:
         logger.debug("We're too low on {} - {} < {}".format(target_measure, nutrients[reverse_targetmap[target_measure]], nt['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))[:10]
-        target_measure += "_too_low"
+        target_measure += " too low"
       if target_measure not in iterations_spent_optimising_constraint:
         iterations_spent_optimising_constraint[target_measure] = 0
       iterations_spent_optimising_constraint[target_measure] += 1
@@ -739,11 +739,11 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       if v > c['max']:
         logger.debug("Food group {} has too many serves - {} > {}".format(target_fg,v,c['max']))
         r = list(np.arange(t['min'], meal[food], foods[food]['serve size'] * min_serve_size_difference))
-        target_fg += "_too_high"
+        target_fg += " too high"
       elif v < c['min']:
         logger.debug("Food group {} has too few serves - {} < {}".format(target_fg,v,c['min']))
         r = list(np.arange(meal[food], t['max'], foods[food]['serve size'] * min_serve_size_difference))
-        target_fg += "_too_low"
+        target_fg += " too low"
       if target_fg not in iterations_spent_optimising_constraint:
         iterations_spent_optimising_constraint[target_fg] = 0
       iterations_spent_optimising_constraint[target_fg] += 1
@@ -928,7 +928,7 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
   e = time.time()
   logger.info('write done, took {}s'.format(e-s))
   inputs = {'person': person, 'nutrient_targets': selected_person_nutrient_targets, 'iteration_limit': iteration_limit, 'min_serve_size_difference': min_serve_size_difference, 'allowed_varieties': allowed_varieties, 'allow_takeaways': allow_takeaways, 'selected_person_food_group_serve_targets': selected_person_food_group_serve_targets}
-  results = {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats}
+  results = {'meal_plans': meal_plans, 'csv_file': filename, 'timestamp': dt, 'inputs': inputs, 'stats': stats, "iterations_spent_optimising_constraint": iterations_spent_optimising_constraint}
   filename = os.path.join(json_folder, '{}.json'.format(dt))
   with open(filename, 'w') as f:
     json.dump(results, f)

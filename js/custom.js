@@ -559,6 +559,19 @@ $(document).ready(function() {
         var summary = "Total meal plans: " + data.stats.total_meal_plans + ". ";
         if (data.stats.total_meal_plans) {
           summary += "Average price: $<span id='price'>" + round(data.stats.price.mean) + "</span>. Average variety: " + round(data.stats.variety.mean) + ". Average 100-year GWP: " + round(data.stats.emissions["100-year GWP"].mean) + ". Average 20-year GWP: " + round(data.stats.emissions["20-year GWP"].mean);
+        } else {
+          var isoc = data.iterations_spent_optimising_constraint
+          keysSorted = Object.keys(isoc).sort(function(a,b){return isoc[b]-isoc[a]})
+          summary += "<h4>Recommendations:</h4>"
+          for (var i = 0; i < 3; i++) {
+            var k = keysSorted[i];
+            if (k.includes("too high")) {
+              k = "Increase max " + k.replace("too high", "");
+            } else if (k.includes("too low")) {
+              k = "Decrease min " + k.replace("too low", "");
+            }
+            summary += "<p>" + k + "</p>"
+          }
         }
         summary += "<a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv' download><i class='material-icons left'>play_for_work</i>Download as csv</a>";
         $('#summary').html(summary);
