@@ -15,7 +15,7 @@ import json
 import argparse
 
 parser = argparse.ArgumentParser(description='Meal planner')
-parser.add_argument('-i', '--iterations', dest="iterations", type=float, nargs='?', default=50000, help='how many times should the algorithm attempt to improve?')
+parser.add_argument('-i', '--iterations', dest="iterations", type=lambda x: int(float(x)), nargs='?', default=50000, help='how many times should the algorithm attempt to improve?')
 parser.add_argument('-f', '--folder', dest='folder', type=str, nargs='?', default='.', help='a folder to put the csv/json output into')
 parser.add_argument('-d', '--dataset', dest='dataset', type=str, nargs='?', default='dataset.xlsx', help='the dataset to use')
 parser.add_argument('-p', '--persona', dest='persona', type=str, nargs='?', default='adult man', help='which person to run the algorithm for')
@@ -32,7 +32,6 @@ parser.add_argument("-q", "--quiet", action="store_const", dest="loglevel", cons
 parser.add_argument("-v", "--verbose", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO, help="increase output verbosity")
 
 args, unknown = parser.parse_known_args()
-args.iterations = int(args.iterations)
 
 logging.basicConfig(stream=sys.stdout, level=args.loglevel)
 logger = logging.getLogger('meal_planner')
