@@ -604,7 +604,9 @@ $(document).ready(function() {
       }
     });
     console.log(variables);
-    variables.person = variables.person + " " + variables.diet;
+    if (variables.diet) {
+      variables.person = variables.person + " " + variables.diet;
+    }
     get_meal_plans(variables);
   });
   $('.modal-trigger').leanModal();
