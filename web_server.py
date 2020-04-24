@@ -33,7 +33,7 @@ def get_meal_plans_get():
 
 @post('/get_meal_plans')
 def get_meal_plans_post():
-  person = request.json.get('person') or 'adult man'
+  person = request.json.get('person', "adult man").strip()
   nutrient_targets = request.json.get('nutrient_targets')
   iterations = request.json.get('iterations') or 10000
   min_serve_size_difference = request.json.get('min_serve_size_difference') or .5
