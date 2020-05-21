@@ -335,8 +335,8 @@ def parseNutrientTargets(sheet, suffix = ""):
             f *= 1000
           if measure == "fat %":
             measure = "Fat % energy"
-          measure = measure.replace("carb%", "CHO % energy").replace("sat Fat", "Saturated fat").replace("protein %", "protein % energy").replace("grams", "g")
-          measure = measure.replace('% E CI', '% energy').replace(' CI', '').replace('Sat Fat', 'Saturated fat').replace('alcohol E%', 'Alcohol % energy').replace('Sodium', 'sodium').replace("+-30%", "").replace("grams", "g").replace('total', 'Total').strip()
+          measure = measure.replace("carb%", "CHO % energy").replace("sat fat %", "Saturated fat % energy").replace("protein %", "protein % energy").replace("grams", "g")
+          measure = measure.replace('% E CI', '% energy').replace(' CI', '').replace('Sat fat', 'Saturated fat').replace('alcohol E%', 'Alcohol % energy').replace('Sodium', 'sodium').replace("+-30%", "").replace("grams", "g").replace('total', 'Total').strip()
           if measure not in n:
             n[measure] = {}
           n[measure][minormax] = f

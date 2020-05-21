@@ -103,7 +103,7 @@ $(document).ready(function() {
     $('select').material_select();
     Materialize.updateTextFields();
     $('#person,#diet').change(function (e) {
-      var p = $('#person').val() + ' ' + $('#diet').val();
+      var p = $('#person').val() + $('#diet').val();
       console.log(p);
       var new_defaults = window.nutritional_targets[p];
       for (var name in new_defaults) {
@@ -118,8 +118,12 @@ $(document).ready(function() {
         $("#dynamic_fields #" + machine_name + " input.min").trigger('keyup');
         $("#dynamic_fields #" + machine_name + " input.max").trigger('keyup');
         var slider = $("#dynamic_fields #" + machine_name + " div.slider")[0];
-        slider.noUiSlider.destroy();
-        createSlider(slider, name, machine_name, defaults)
+        if (!slider) {
+          console.error(machine_name);
+        } else {
+          slider.noUiSlider.destroy();
+          createSlider(slider, name, machine_name, defaults)
+        }
       }
       for (var name in window.foodGroupTargets) {
         if (!window.foodGroupTargets[name]['constraints_serves']) continue;
@@ -134,8 +138,12 @@ $(document).ready(function() {
         $("#dynamic_fields #" + machine_name + " input.min").trigger('keyup');
         $("#dynamic_fields #" + machine_name + " input.max").trigger('keyup');
         var slider = $("#dynamic_fields #" + machine_name + " div.slider")[0];
-        slider.noUiSlider.destroy();
-        createSlider(slider, name, machine_name, defaults)
+        if (!slider) {
+          console.error(machine_name);
+        } else {
+          slider.noUiSlider.destroy();
+          createSlider(slider, name, machine_name, defaults);
+        }
       }
     });
     
@@ -604,9 +612,7 @@ $(document).ready(function() {
       }
     });
     console.log(variables);
-    if (variables.diet) {
-      variables.person = variables.person + " " + variables.diet;
-    }
+    variables.person = variables.person + variables.diet;
     get_meal_plans(variables);
   });
   $('.modal-trigger').leanModal();
