@@ -110,7 +110,7 @@ $(document).ready(function() {
         var defaults = new_defaults[name];
         if (!defaults) {
           console.error("No " + name + " nutritional constraint defined for " + p + "!");
-          continue;
+          defaults = {min: 0, max: 100}
         }
         var machine_name = get_machine_name(name);
         $("#dynamic_fields #" + machine_name + " input.min").val(round(defaults.min));
@@ -131,7 +131,7 @@ $(document).ready(function() {
         var defaults = window.foodGroupTargets[name]['constraints_serves'][p];
         if (!defaults) {
           console.error("No " + name + " food group serves constraint defined for " + p + "!");
-          continue;
+          defaults = {min: 0, max: 100}
         }
         $("#dynamic_fields #" + machine_name + " input.min").val(round(defaults.min));
         $("#dynamic_fields #" + machine_name + " input.max").val(round(defaults.max));
