@@ -251,8 +251,9 @@ def parseFoodConstraints(sheet, suffix = ""):
           elif partial == 'Protein':
             fg_header = 'Protein'
           foods[name]['Food group_C'] = fg_header
-      else:
-        foods[name]['Variety'] = row['Variety']
+      elif foods[name]["Variety"] != row["Variety"]:
+        logger.warning(f'Variety for {name} in common foods sheet ({foods[name]["Variety"]}) does not match variety in{suffix if suffix else " H"} sheet ({row["Variety"]})')
+        #foods[name]['Variety'] = row['Variety']
 
     # This row contains constraints for a given food group
     elif row['Food group']:
