@@ -89,13 +89,13 @@ target_to_measure = {
 linked_foods = {
   'milk-cereal': {
      # The total number of serves of milk is higher than or equal to the total number of serves of breakfast cereals
-    'lower': ["03046", "03047", "03048", "03065", "03068", "03050"], # cereal
-    'higher' : ["04059", "04060"], # milk
+    'lower': ["03042", "03043", "03044"], # cereal
+    'higher' : ["04045", "04046", "04047", "04049"], # milk
   },
   'spread-bread': {
     # The total number of serves of spread is equal to or lower than the total number of serves of bread and crackers
-    'lower': ["05083", "06088", "06089", "08110", "08098", "08108", "08097"], # spread
-    'higher': ["03036", "03037", "03038", "03040", "03044", "03062"], # bread/crackers
+    'lower': ["04055", "06078", "06079", "06080", "08111", "08112", "08113"], # spread
+    'higher': ["03034", "03035", "03036", "03037", "03038"], # bread/crackers
   }
 }
 
@@ -137,7 +137,7 @@ nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets
 foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Healthy'), header=2)
 foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Current'), header=2)
 try:
-  foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use'))
+  foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices to use'))
 except:
   foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('Food prices to use '))
 variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
@@ -155,7 +155,7 @@ for row in foodsSheet:
   elif "Protein" in row['Food group']:
     row['Food group'] = 'Protein'
 
-  row['redmeat'] = row['Commonly consumed food ID'] in ["05065", "05067", "05073", "05074", "05089"]
+  row['redmeat'] = row['Commonly consumed food ID'] in ["05065", "05067", "05089"]
 
   foods[name] = row
   foods[name]['variable prices'] = []
@@ -381,7 +381,7 @@ for row in variableFoodPricesSheet:
   if not row['Commonly consumed food ID']:
     continue
   if int(row['Commonly consumed food ID']) not in food_ids:
-    logger.warning("{} has a variable price but is not defined!".format(row['Food Id']))
+    logger.warning("{} has a variable price but is not defined!".format(row['Commonly consumed food ID']))
     continue
   if not row['price/100g AP']:
     continue
