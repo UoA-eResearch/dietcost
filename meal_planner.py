@@ -91,13 +91,13 @@ target_to_measure = {
 linked_foods = {
   'milk-cereal': {
      # The total number of serves of milk is higher than or equal to the total number of serves of breakfast cereals
-    'lower': ["03046", "03047", "03048", "03065", "03068", "03050"], # cereal
-    'higher' : ["04059", "04060", "04058", "04065", "04068"], # milk
+    'lower': ["03046", "03047"], # cereal
+    'higher' : ["04059", "04060", "04074"], # milk and yoghurt
   },
   'spread-bread': {
     # The total number of serves of spread is equal to or lower than the total number of serves of bread and crackers
-    'lower': ["05083", "06088", "06089", "08110", "08098", "08108", "08097"], # spread
-    'higher': ["03036", "03037", "03038", "03040", "03044", "03062"], # bread/crackers
+    'lower': ["05083", "06088", "06089", "08110", "08098", "08108", "08097", "08117", "08119", "08121", "08123"], # spread
+    'higher': ["03036", "03037", "03038", "03039", "03040", "03044", "03062", "03064", "03061", "03076"], # bread/crackers
   }
 }
 
@@ -166,7 +166,7 @@ for row in foodsSheet:
   elif "Protein" in row['Food group']:
     row['Food group'] = 'Protein'
 
-  row['redmeat'] = row['Commonly consumed food ID'] in ["05065", "05067", "05073", "05074", "05089"]
+  row['redmeat'] = row['Commonly consumed food ID'] in ["05065", "05067", "05073", "05074", "05089", "05068", "05072"]
 
   foods[name] = row
   foods[name]['variable prices'] = []
