@@ -302,6 +302,9 @@ for row in nutrientsTargetsHSheet:
       f = float(value)
       if '(s)' in measure:
         measure = measure.replace("vege", "Vegetables").replace(" (s)", "").capitalize()
+        if measure not in food_groups:
+          logger.warning(f"Food group for nutrient target {measure} not known")
+          continue
         if food_groups[measure]['constraints_serves'][p_strip][minormax] != f:
           logger.warning("Override {} {} for {} from {} to {}".format(measure, minormax, p_strip, food_groups[measure]['constraints_serves'][p_strip][minormax], f))
           food_groups[measure]['constraints_serves'][p_strip][minormax] = f
@@ -337,6 +340,9 @@ for row in nutrientsTargetsCSheet:
       f = float(value)
       if '(s)' in measure:
         measure = measure.replace("vege", "Vegetables").replace(" (s)+-30%", "").capitalize()
+        if measure not in food_groups:
+          logger.warning(f"Food group for nutrient target {measure} not known")
+          continue
         if food_groups[measure]['constraints_serves'][p_strip][minormax] != f:
           logger.warning("Override {} {} for {} from {} to {}".format(measure, minormax, p_strip, food_groups[measure]['constraints_serves'][p_strip][minormax], f))
           food_groups[measure]['constraints_serves'][p_strip][minormax] = f
@@ -386,6 +392,8 @@ for row in variableFoodPricesSheet:
   if not row['price/100g AP']:
     continue
   name = food_ids[int(row['Commonly consumed food ID'])]
+  if 'price/100g' not in foods[name]:
+    foods[name]['price/100g'] = float(row['price/100g AP'])
   foods[name]['variable prices'].append({
     'outlet type': row['outlet type'],
     'region': row['region'],
@@ -717,6 +725,8 @@ def get_meal_plans(person='adult man', selected_person_nutrient_targets=None, it
       for item in meal:
         if get_fg_for_p(foods[item], person) == target_fg:
           foods_that_impact_this_measure.append(item)
+      if not foods_that_impact_this_measure:
+        raise ValueError("No foods impact {}!".format(target_fg))
       food = random.choice(foods_that_impact_this_measure)
       t = foods[food]['constraints'][person]
       if v > c['max']:
