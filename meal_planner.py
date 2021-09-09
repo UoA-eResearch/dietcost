@@ -70,7 +70,15 @@ targetmap = {
   'Fibre': 'fibre g',
   'Alcohol % energy': 'Alcohol % energy',
   'Discretionary foods % energy': 'Discretionary foods % energy',
-  'Red meat': 'red meat (g)'
+  'Red meat': 'red meat (g)',
+  'Iron m': 'Iron mg',
+  'Calcium m': 'Calcium mg',
+  'Zinc m': 'Zinc mg',
+  'Iodine µ': 'Iodine µg',
+  'Vitamin B12 µ': 'Vitamin B12 µg',
+  'Animal protein % of total protein intake': 'Animal protein % of total protein intake',
+  'Plant protein % of total protein intake': 'Plant protein % of total protein intake',
+  'Free sugar': 'Free sugar (g)'
 }
 
 reverse_targetmap = dict([(v,k) for k,v in targetmap.items()])
@@ -83,7 +91,15 @@ target_to_measure = {
   'Fat % energy': 'Fat g/100g',
   'Energy kJ': 'Energy kJ/100g',
   'Total sugars % energy': 'Sugars g/100g',
-  'fibre g': 'Fibre g/100g'
+  'fibre g': 'Fibre g/100g',
+  'Iron mg': 'Iron mg/100g',
+  'Calcium mg': 'Calcium mg/100g',
+  'Zinc mg': 'Zinc mg/100g',
+  'Iodine µg': 'Iodine µg/100g',
+  'Vitamin B12 µg': 'Vitamin B12 µg/100g',
+  'Animal protein % of total protein intake': 'Animal protein g/100g',
+  'Plant protein % of total protein intake': 'Plant protein g/100g',
+  'Free sugar (g)': 'Free sugar g/100g'
 }
 
 linked_foods = {
@@ -312,7 +328,11 @@ for row in nutrientsTargetsHSheet:
         if measure == 'Energy MJ':
           measure = 'Energy kJ'
           f *= 1000
-        measure = measure.replace("carb%", "CHO % energy").replace("fat %", "Fat % energy").replace("sat Fat", "Saturated fat").replace("protein %", "protein % energy").replace("grams", "g")
+        measure = measure.replace("carb%", "CHO % energy").replace("fat %", "Fat % energy").replace("sat Fat", "Saturated fat").replace("grams", "g")
+        if measure == "protein %":
+          measure = "protein % energy"
+        if not measure or measure == "_2":
+          measure = "Plant protein % of total protein intake"
         if measure not in n:
           n[measure] = {}
         n[measure][minormax] = f
@@ -351,6 +371,8 @@ for row in nutrientsTargetsCSheet:
           measure = 'Energy kJ'
           f *= 1000
         measure = measure.replace('% E CI', '% energy').replace(' CI', '').replace('fat', 'Fat').replace('Sat Fat', 'Saturated fat').replace('alcohol E%', 'Alcohol % energy').replace('Sodium', 'sodium').replace("+-30%", "").replace("protein %", "protein % energy").replace("grams", "g").replace('total', 'Total').strip()
+        if not measure or measure == "_2":
+          measure = "Plant protein % energy of Total protein intake"
         if measure not in n:
           n[measure] = {}
         #if minormax == 'min':
@@ -485,6 +507,9 @@ def get_nutrients(meal, person = ''):
       nutrients_sum['Red meat'] += amount
 
   # Convert g to % E
+  nutrients_sum["Animal protein % of total protein intake"] = nutrients_sum["Animal protein"] / nutrients_sum["protein"] * 100
+  nutrients_sum["Plant protein % of total protein intake"] = nutrients_sum["Plant protein"] / nutrients_sum["protein"] * 100
+
   for k, v in nutrients_sum.items():
     if k == 'Fat' or k == 'Sat fat':
       nutrients_sum[k] = ((v * 37.7) / nutrients_sum['Energy kJ']) * 100
