@@ -3,7 +3,7 @@ $(document).ready(function() {
     return Math.round(float * 100) / 100;
   }
   function get_machine_name(name) {
-    return name.replace(/[ %*&()]+/g, '_');
+    return name.replace(/[ %*&()\/]+/g, '_');
   }
   function validate(min, max) {
     min = parseFloat(min);
@@ -27,6 +27,7 @@ $(document).ready(function() {
   }
   function createSlider(slider, name, machine_name, defaults) {
     var range = {'min': 0, 'max': defaults.max * 2} // range to choose from
+    if (range.min == range.max) range.max = range.max + 100;
     if (name.indexOf('%') !== -1) {
       range = {'min': 0, 'max': 100}
     }
@@ -98,22 +99,18 @@ $(document).ready(function() {
           createSlider(slider, name, machine_name, defaults)
         });
       }
-      var person_display = person.replace('7 girl', '7-year-old girl').replace('adult women', 'adult woman').replace('14 boy', '14-year-old boy');
-      if (!person_display.endsWith('C')) {
-        person_display += ' H';
-      }
-      $('#person').append("<option " + selected + " value='" + person + "'>" + person_display + "</option>")
     }
     $('select').material_select();
     Materialize.updateTextFields();
-    $('#person').change(function (e) {
-      var p = $(this).val();
+    $('#person,#diet').change(function (e) {
+      var p = $('#person').val() + $('#diet').val();
+      console.log(p);
       var new_defaults = window.nutritional_targets[p];
       for (var name in new_defaults) {
         var defaults = new_defaults[name];
         if (!defaults) {
           console.error("No " + name + " nutritional constraint defined for " + p + "!");
-          continue;
+          defaults = {min: 0, max: 100}
         }
         var machine_name = get_machine_name(name);
         $("#dynamic_fields #" + machine_name + " input.min").val(round(defaults.min));
@@ -121,8 +118,12 @@ $(document).ready(function() {
         $("#dynamic_fields #" + machine_name + " input.min").trigger('keyup');
         $("#dynamic_fields #" + machine_name + " input.max").trigger('keyup');
         var slider = $("#dynamic_fields #" + machine_name + " div.slider")[0];
-        slider.noUiSlider.destroy();
-        createSlider(slider, name, machine_name, defaults)
+        if (!slider) {
+          console.error(machine_name);
+        } else {
+          slider.noUiSlider.destroy();
+          createSlider(slider, name, machine_name, defaults)
+        }
       }
       for (var name in window.foodGroupTargets) {
         if (!window.foodGroupTargets[name]['constraints_serves']) continue;
@@ -130,15 +131,19 @@ $(document).ready(function() {
         var defaults = window.foodGroupTargets[name]['constraints_serves'][p];
         if (!defaults) {
           console.error("No " + name + " food group serves constraint defined for " + p + "!");
-          continue;
+          defaults = {min: 0, max: 100}
         }
         $("#dynamic_fields #" + machine_name + " input.min").val(round(defaults.min));
         $("#dynamic_fields #" + machine_name + " input.max").val(round(defaults.max));
         $("#dynamic_fields #" + machine_name + " input.min").trigger('keyup');
         $("#dynamic_fields #" + machine_name + " input.max").trigger('keyup');
         var slider = $("#dynamic_fields #" + machine_name + " div.slider")[0];
-        slider.noUiSlider.destroy();
-        createSlider(slider, name, machine_name, defaults)
+        if (!slider) {
+          console.error(machine_name);
+        } else {
+          slider.noUiSlider.destroy();
+          createSlider(slider, name, machine_name, defaults);
+        }
       }
     });
     
@@ -153,8 +158,8 @@ $(document).ready(function() {
         var display_name = name.charAt(0).toUpperCase() + name.slice(1) + ' serves';
         var defaults = constraints['constraints_serves']['adult man'];
         if (!defaults) {
-          console.error("No " + name + " defined for adult man!");
-          return;
+          console.warn("No " + name + " defined for adult man!");
+          defaults = {min: 0, max: 100}
         }
         $("#dynamic_fields").append('<div id="' + machine_name + '" class="row"><p class="nt_label">' + display_name + '</p><div class="input-field col s2"><input name="fg_' + name + '_min" value="' + round(defaults.min) + '" type="text" class="min validate"><label for="min">Min</label></div><div class="slider-wrapper col s8"><div class="slider"></div></div><div class="input-field col s2"><input type="text" name="fg_' + name + '_max" value="' + round(defaults.max) + '" class="max validate"><label for="max">Max</label></div></div>');
         var slider = $('#' + machine_name + ' div.slider')[0];
@@ -530,7 +535,8 @@ $(document).ready(function() {
           for (var i in keys) {
             var k = keys[i];
             var amount = o.meal[k];
-            items += "<tr><td>" + k + "</td><td>" + round(amount) + "g</td></tr>";
+            var serves = o.serves[k];
+            items += "<tr><td>" + k + "</td><td>" + round(amount) + "g</td><td>" + round(serves) + "</td></tr>";
           }
           var fgSum = "";
           var keys = Object.keys(o.per_group).sort();
@@ -539,17 +545,41 @@ $(document).ready(function() {
             var d = o.per_group[k];
             fgSum += "<tr class='" + get_machine_name(k) + "'><td>" + k + "</td><td>" + round(d['amount']) + "g</td><td>$<span class='price'>" + round(d['price']) + "</span></td><td>" + round(d['serves']) + "</td></tr>";
           }
-          var table = "<table class='highlight bordered'><thead><tr><th data-field='name'>Name</th><th data-field='amount'>Amount</th></tr></thead><tbody>" + items + "</tbody></table>";
+          var eSum = "";
+          var keys = Object.keys(o.emissions).sort();
+          for (var i in keys) {
+            var k = keys[i];
+            var d = o.emissions[k];
+            if (k == "100-year GWP" || k == "20-year GWP") {
+              k = "<u style='text-decoration: underline double;'>" + k + "</u>";
+            }
+            eSum += "<tr><td>" + k + "</td><td>" + round(d) + "</td></tr>";
+          }
+          var table = "<table class='highlight bordered'><thead><tr><th data-field='name'>Name</th><th data-field='amount'>Amount</th><th data-field='serves'>Serves</th></tr></thead><tbody>" + items + "</tbody></table>";
           var collapsibleTable = "<ul class='collapsible' data-collapsible='accordion'><li><div class='collapsible-header'><i class='material-icons'>receipt</i>Items</div><div class='collapsible-body'>" + table + "</div></li></ul>";
           var foodGroupTable = "<h4>Food group breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Amount</th><th>Price</th><th>Serves</th></tr></thead>" + fgSum + "</table>";
+          var emissionsTable = "<h4>Emissions breakdown</h4><br><table class='highlight bordered'><thead><tr><th>Category</th><th>Emissions (kgCO2e)</th></tr></thead>" + eSum + "</table>";
           var summary = "<p class='priceWrapper'>Price: $<span class='totalPrice'>" + round(o.price) + "</span></p><p class='variety'>Variety: " + round(o.variety) + "</p>";
-          var card = "<div id='" + hash + "' class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'>" + foodGroupTable + "<br>" + summary + "</div></div></div>";
+          var card = "<div id='" + hash + "' class='col s12 m6'><div class='card hoverable'><div class='card-content'>" + table + "</div><div class='card-action'>" + foodGroupTable + "<br>" + emissionsTable + "<br>" + summary + "</div></div></div>";
           $('#meal_plans').append(card);
         }
         $('.collapsible').collapsible();
         var summary = "Total meal plans: " + data.stats.total_meal_plans + ". ";
         if (data.stats.total_meal_plans) {
-          summary += "Average price: $<span id='price'>" + round(data.stats.price.mean) + "</span>. Average variety: " + round(data.stats.variety.mean) + ". ";
+          summary += "Average price: $<span id='price'>" + round(data.stats.price.mean) + "</span>. Average variety: " + round(data.stats.variety.mean) + ". Average 100-year GWP: " + round(data.stats.emissions["100-year GWP"].mean) + ". Average 20-year GWP: " + round(data.stats.emissions["20-year GWP"].mean);
+        } else {
+          var isoc = data.iterations_spent_optimising_constraint
+          keysSorted = Object.keys(isoc).sort(function(a,b){return isoc[b]-isoc[a]})
+          summary += "<h4>Recommendations:</h4>"
+          for (var i = 0; i < 3; i++) {
+            var k = keysSorted[i];
+            if (k.includes("too high")) {
+              k = "Increase max " + k.replace("too high", "");
+            } else if (k.includes("too low")) {
+              k = "Decrease min " + k.replace("too low", "");
+            }
+            summary += "<p>" + k + "</p>"
+          }
         }
         summary += "<a href='" + data.csv_file + "' class='waves-effect waves-light btn download-as-csv' download><i class='material-icons left'>play_for_work</i>Download as csv</a>";
         $('#summary').html(summary);
@@ -582,6 +612,7 @@ $(document).ready(function() {
       }
     });
     console.log(variables);
+    variables.person = variables.person + variables.diet;
     get_meal_plans(variables);
   });
   $('.modal-trigger').leanModal();

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import meal_planner
 from bottle import *
@@ -33,7 +33,7 @@ def get_meal_plans_get():
 
 @post('/get_meal_plans')
 def get_meal_plans_post():
-  person = request.json.get('person') or 'adult man'
+  person = request.json.get('person', "adult man").strip()
   nutrient_targets = request.json.get('nutrient_targets')
   iterations = request.json.get('iterations') or 10000
   min_serve_size_difference = request.json.get('min_serve_size_difference') or .5
@@ -68,9 +68,9 @@ port = int(os.environ.get('PORT', 8080))
 if __name__ == "__main__":
   try:
     try:
-      run(host='0.0.0.0', port=port, debug=True, server='gunicorn', workers=8)
+      run(host='0.0.0.0', port=port, debug=True, server='gunicorn', workers=8, timeout=500)
     except ImportError:
-      run(host='0.0.0.0', port=port, debug=True)
+      run(host='0.0.0.0', port=port, debug=True, timeout=500)
   except Exception as e:
     logger.error(e)
     sys.stdin.readline()

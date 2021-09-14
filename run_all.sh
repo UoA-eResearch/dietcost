@@ -1,21 +1,14 @@
 #!/bin/bash
 
-iterations=1000000
-name=1M
-dataset=dataset_general.xlsx
-#dataset=dataset_Maori.xlsx
-#dataset=dataset_Pacific.xlsx
+iterations="1e6"
 
 declare -a personas=("adult man" "adult women" "14 boy" "7 girl")
 
-mkdir -p $name/logs
-
-for i in {1..5};do
+for i in {1..40};do
   for p in "${personas[@]}";do
-    ./meal_planner.py --iterations $iterations --folder $name --dataset $dataset --persona "$p" --discretionary 0  --no-takeaways --alcohol 0 > "$name/logs/${p}_${i}.log" &
-  done
-  for p in "${personas[@]}";do
-    p="$p C"
-    ./meal_planner.py --iterations $iterations --folder $name --dataset $dataset --persona "$p" --discretionary 100  --takeaways --alcohol 0  > "$name/logs/${p}_${i}.log" &
+    pc="$p C"
+    mkdir -p "runs/$p" "runs/$pc"
+    echo "python3.6 meal_planner.py --iterations $iterations --folder \"runs/$p\" --persona \"$p\" --alcohol 0 > \"runs/$p/$i.log\""
+    echo "python3.6 meal_planner.py --iterations $iterations --folder \"runs/$pc\" --persona \"$pc\" --alcohol 0 > \"runs/$pc/$i.log\""
   done
 done
