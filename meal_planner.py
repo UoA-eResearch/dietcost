@@ -142,88 +142,6 @@ def parse_sheet(sheet, header=0, limit=None):
     rows.append(row)
   return rows
 
-# Load knowledge
-
-f = args.dataset
-xl_workbook = xlrd.open_workbook(f)
-sheet_names = xl_workbook.sheet_names()
-
-foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
-nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
-nutrientsTargetsPFSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=28, limit=8)
-nutrientsTargetsPVSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=39, limit=8)
-nutrientsTargetsHSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=50, limit=8)
-nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=60, limit=8)
-foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Healthy'), header=2)
-foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Current'), header=2)
-foodConstraintsPFSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Planetary_F'), header=2)
-foodConstraintsPVSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Planetary_V'), header=2)
-foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices to use'))
-variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
-foodWasteSheet = parse_sheet(xl_workbook.sheet_by_name('food waste'))
-
-f = "cpiprices.xlsx"
-xl_workbook = xlrd.open_workbook(f)
-cpiPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
-
-variableFoodPricesSheet += cpiPricesSheet
-
-f = "NZ Food Emissions Database.xlsx"
-xl_workbook = xlrd.open_workbook(f)
-emissions = parse_sheet(xl_workbook.sheet_by_name('database_common_foods'), header = 2)
-
-for row in foodsSheet:
-  name = row['Commonly consumed food']
-  if not name:
-    print("Missing name on row:", row)
-    exit(1)
-  if row['Food group'] == 'Sauces, dressings, spreads, sugars':
-    row['Food group'] = 'Sauces'
-  elif "Protein" in row['Food group']:
-    row['Food group'] = 'Protein'
-
-  row['redmeat'] = row['Commonly consumed food ID'] in ["05065", "05067", "05089"]
-
-  foods[name] = row
-  foods[name]['variable prices'] = []
-  foods[name]["constraints"] = {}
-  food_ids[int(row['Commonly consumed food ID'])] = name
-
-  if row['Food group'] == ' Discretionary foods':
-    row['Food group'] = 'Discretionary foods'
-
-  if row['Food group'] not in food_groups:
-    food_groups[row['Food group']] = {
-      "constraints_serves": {}
-    }
-
-# kgCO2e/kg
-emissions_keys = ['Farming & processing (100-year GWP)', 'Farming & processing (20-year GWP)', 'Transit packaging', 'Consumer packaging', 'Transport', 'Warehouse/ distribution', 'Refrigeration', 'Overheads', '100-year GWP', '20-year GWP']
-
-for row in emissions:
-  if row["Match ID"]:
-    for fid in str(row["Match ID"]).split():
-      try:
-        name = food_ids[int(float(fid))]
-        foods[name]["emissions"] = row
-      except:
-        logger.warning(f"{fid} in emissions sheet not known")
-
-for row in foodWasteSheet:
-  if row["Commonly consumed food ID"]:
-    try:
-      name = food_ids[int(row["Commonly consumed food ID"])]
-    except:
-      logger.warning("{} in food waste sheet not known".format(row["Commonly consumed food ID"]))
-    try:
-      foods[name]["waste_multiplier"] = float(row["food waste multiple (avoidable)"])
-    except ValueError:
-      pass
-
-food_groups['Starchy vegetables'] = {
-  "constraints_serves": {}
-}
-
 def parseFoodConstraints(sheet, suffix = ""):
   isStarchy = False
   for row in sheet:
@@ -295,33 +213,6 @@ def parseFoodConstraints(sheet, suffix = ""):
             '7 girl' + suffix: {'min': row['Min per week_3'] / 7.0, 'max': row['Max per week_3'] / 7.0}
           })
 
-parseFoodConstraints(foodConstraintsHSheet)
-parseFoodConstraints(foodConstraintsCSheet, " C")
-parseFoodConstraints(foodConstraintsPFSheet, " PF")
-parseFoodConstraints(foodConstraintsPVSheet, " PV")
-
-food_groups['Starchy vegetables']['constraints_serves'].update({
-          'adult man C': {'min': 0, 'max': 100},
-          'adult women C': {'min': 0, 'max': 100},
-          '14 boy C': {'min': 0, 'max': 100},
-          '7 girl C': {'min': 0, 'max': 100}
-})
-
-for row in nutrientsSheet:
-  fid = int(row['Commonly consumed food ID'])
-  if fid not in food_ids:
-    logger.warning("nutrition defined, but {} not known!".format(fid))
-    continue
-
-  floats = {}
-  for k,v, in row.items():
-    try:
-      if k != 'Common food ID':
-        floats[k] = float(v)
-    except ValueError:
-      pass
-  name = food_ids[fid]
-  foods[name]['nutrition'] = floats
 
 def parseNutrientTargets(sheet, suffix = ""):
   for row in sheet:
@@ -342,7 +233,10 @@ def parseNutrientTargets(sheet, suffix = ""):
           value = 100
         f = float(value)
         if '(s)' in measure:
-          measure = measure.replace("vege", "Vegetables").replace(" (s)", "").replace("+-30%", "").replace("dairy", "Dairy/alternatives").capitalize()
+          measure = measure.replace("vege", "Vegetables").replace(" (s)", "").replace("+-30%", "").capitalize()
+          if measure not in food_groups:
+            logger.warning(f"Food group for nutrient target {measure} not known")
+            continue
           if food_groups[measure]['constraints_serves'][p_strip][minormax] != f:
             logger.warning("Override {} {} for {} from {} to {}".format(measure, minormax, p_strip, food_groups[measure]['constraints_serves'][p_strip][minormax], f))
             food_groups[measure]['constraints_serves'][p_strip][minormax] = f
@@ -354,6 +248,8 @@ def parseNutrientTargets(sheet, suffix = ""):
             measure = "Fat % energy"
           measure = measure.replace("carb%", "CHO % energy").replace("sat fat %", "Saturated fat % energy").replace("protein %", "protein % energy").replace("grams", "g")
           measure = measure.replace('% E CI', '% energy').replace(' CI', '').replace('Sat fat', 'Saturated fat').replace('alcohol E%', 'Alcohol % energy').replace('Sodium', 'sodium').replace("+-30%", "").replace("grams", "g").replace('total', 'Total').strip()
+          if not measure or measure == "_2":
+            measure = "Plant protein % energy of Total protein intake"
           if measure not in n:
             n[measure] = {}
           n[measure][minormax] = f
@@ -366,10 +262,132 @@ def parseNutrientTargets(sheet, suffix = ""):
   #  n['fibre g']['max'] = n['fibre g']['min'] * 4
     nutrient_targets[p_strip] = n
 
-parseNutrientTargets(nutrientsTargetsHSheet)
-parseNutrientTargets(nutrientsTargetsCSheet, " C")
-parseNutrientTargets(nutrientsTargetsPFSheet, " PF")
-parseNutrientTargets(nutrientsTargetsPVSheet, " PV")
+# Load knowledge
+
+f = args.dataset
+xl_workbook = xlrd.open_workbook(f)
+sheet_names = xl_workbook.sheet_names()
+
+foodsSheet = parse_sheet(xl_workbook.sheet_by_name('common foods'))
+foodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices to use'))
+variableFoodPricesSheet = parse_sheet(xl_workbook.sheet_by_name('food prices'))
+
+f = "cpiprices.xlsx"
+cpi_workbook = xlrd.open_workbook(f)
+cpiPricesSheet = parse_sheet(cpi_workbook.sheet_by_name('food prices'))
+
+variableFoodPricesSheet += cpiPricesSheet
+
+f = "NZ Food Emissions Database.xlsx"
+emissions_workbook = xlrd.open_workbook(f)
+emissions = parse_sheet(emissions_workbook.sheet_by_name('database_common_foods'), header = 2)
+
+for row in foodsSheet:
+  name = row['Commonly consumed food']
+  if not name:
+    print("Missing name on row:", row)
+    exit(1)
+  if row['Food group'] == 'Sauces, dressings, spreads, sugars':
+    row['Food group'] = 'Sauces'
+  elif "Protein" in row['Food group']:
+    row['Food group'] = 'Protein'
+
+  row['redmeat'] = row['Commonly consumed food ID'] in ["05065", "05067", "05089"]
+
+  foods[name] = row
+  foods[name]['variable prices'] = []
+  foods[name]["constraints"] = {}
+  food_ids[int(row['Commonly consumed food ID'])] = name
+
+  if row['Food group'] == ' Discretionary foods':
+    row['Food group'] = 'Discretionary foods'
+
+  if row['Food group'] not in food_groups:
+    food_groups[row['Food group']] = {
+      "constraints_serves": {}
+    }
+
+# kgCO2e/kg
+emissions_keys = ['Farming & processing (100-year GWP)', 'Farming & processing (20-year GWP)', 'Transit packaging', 'Consumer packaging', 'Transport', 'Warehouse/ distribution', 'Refrigeration', 'Overheads', '100-year GWP', '20-year GWP']
+
+for row in emissions:
+  if row["Match ID"]:
+    for fid in str(row["Match ID"]).split():
+      try:
+        name = food_ids[int(float(fid))]
+        foods[name]["emissions"] = row
+      except:
+        logger.warning(f"{fid} in emissions sheet not known")
+
+try:
+  foodWasteSheet = parse_sheet(xl_workbook.sheet_by_name('food waste'))
+  for row in foodWasteSheet:
+    if row["Commonly consumed food ID"]:
+      try:
+        name = food_ids[int(row["Commonly consumed food ID"])]
+      except:
+        logger.warning("{} in food waste sheet not known".format(row["Commonly consumed food ID"]))
+      try:
+        foods[name]["waste_multiplier"] = float(row["food waste multiple (avoidable)"])
+      except ValueError:
+        pass
+except xlrd.biffh.XLRDError:
+  logger.error("No food waste sheet")
+
+food_groups['Starchy vegetables'] = {
+  "constraints_serves": {
+    'adult man C': {'min': 0, 'max': 100},
+    'adult women C': {'min': 0, 'max': 100},
+    '14 boy C': {'min': 0, 'max': 100},
+    '7 girl C': {'min': 0, 'max': 100}
+  }
+}
+
+
+nutrientsSheet = parse_sheet(xl_workbook.sheet_by_name('nutrients'))
+try:
+  nutrientsTargetsPFSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=28, limit=8)
+  nutrientsTargetsPVSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=39, limit=8)
+  nutrientsTargetsHSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=50, limit=8)
+  nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=60, limit=8)
+  foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Healthy'), header=2)
+  foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Current'), header=2)
+  foodConstraintsPFSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Planetary_F'), header=2)
+  foodConstraintsPVSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Planetary_V'), header=2)
+  parseFoodConstraints(foodConstraintsHSheet)
+  parseFoodConstraints(foodConstraintsCSheet, " C")
+  parseFoodConstraints(foodConstraintsPFSheet, " PF")
+  parseFoodConstraints(foodConstraintsPVSheet, " PV")
+  parseNutrientTargets(nutrientsTargetsHSheet)
+  parseNutrientTargets(nutrientsTargetsCSheet, " C")
+  parseNutrientTargets(nutrientsTargetsPFSheet, " PF")
+  parseNutrientTargets(nutrientsTargetsPVSheet, " PV")
+except IndexError:
+  nutrientsTargetsHSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=14, limit=8)
+  nutrientsTargetsCSheet = parse_sheet(xl_workbook.sheet_by_name('nutrient targets'), header=24, limit=8)
+  foodConstraintsHSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Healthy'), header=2)
+  foodConstraintsCSheet = parse_sheet(xl_workbook.sheet_by_name('Constraints Current'), header=2)
+  parseFoodConstraints(foodConstraintsHSheet)
+  parseFoodConstraints(foodConstraintsCSheet, " C")
+  parseNutrientTargets(nutrientsTargetsHSheet)
+  parseNutrientTargets(nutrientsTargetsCSheet, " C")
+
+for row in nutrientsSheet:
+  fid = int(row['Commonly consumed food ID'])
+  if fid not in food_ids:
+    logger.warning("nutrition defined, but {} not known!".format(fid))
+    continue
+
+  floats = {}
+  for k,v, in row.items():
+    try:
+      if k != 'Common food ID':
+        floats[k] = float(v)
+    except ValueError:
+      pass
+  name = food_ids[fid]
+  foods[name]['nutrition'] = floats
+
 
 
 for row in foodPricesSheet:
